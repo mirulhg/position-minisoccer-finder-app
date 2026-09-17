@@ -1,16 +1,13 @@
 import { Card } from '../../../components/ui/Card';
 import { ATTRIBUTE_LABELS, type AttributeVector } from '../../scoring';
+import { rankAttributesDescending } from '../lib/attribute-ranking';
 
 interface WhyBlockProps {
   attributes: AttributeVector;
 }
 
-function sortedEntries(attributes: AttributeVector) {
-  return (Object.entries(attributes) as [keyof AttributeVector, number][]).sort((a, b) => b[1] - a[1]);
-}
-
 export function WhyBlock({ attributes }: WhyBlockProps) {
-  const entries = sortedEntries(attributes);
+  const entries = rankAttributesDescending(attributes);
   const strongest = entries.slice(0, 3);
   const weakest = entries.slice(-2).reverse();
 

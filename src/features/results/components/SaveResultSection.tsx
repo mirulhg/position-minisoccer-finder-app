@@ -1,0 +1,133 @@
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card';
+import { dbGet, markSynced } from '../../../lib/db';
+import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
+import { deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
+import type { OnboardingProfile } from '../../onboarding';
+import type { ScoringResult } from '../../scoring';
+
+interface SaveResultSectionProps {
+  profile: OnboardingProfile;
+  scoringResult: ScoringResult;
+  onViewHistory: () => void;
+}
+
+type MigrationState = 'idle' | 'migrating' | 'done' | 'error';
+
+/**
+ * "Simpan hasil ini" di layar hasil — satu-satunya tempat login ditawarkan
+ * (PRD Lampiran C.5: alur Fase 1 tanpa akun tetap berjalan penuh, login
+ * tidak dipaksa di depan). Migrasi berjalan sekali otomatis begitu sesi
+ * Supabase terdeteksi, termasuk setelah reload penuh akibat redirect
+ * OAuth/magic-link.
+ */
+export function SaveResultSection({ profile, scoringResult, onViewHistory }: SaveResultSectionProps) {
+  const { session, isLoading: isSessionLoading } = useAuthSession();
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [migrationState, setMigrationState] = useState<MigrationState>('idle');
+  const [migrationError, setMigrationError] = useState<string | null>(null);
+  const hasStartedMigration = useRef(false);
+
+  useEffect(() => {
+    // Sinkronisasi dengan sesi Supabase Auth: begitu sesi muncul (bisa lewat
+    // redirect penuh dari OAuth/magic-link), jalankan migrasi lokal→akun
+    // sekali saja, ditandai lewat ref supaya efek berikutnya tidak mengulang.
+    if (!session || !supabase || hasStartedMigration.current) return;
+    hasStartedMigration.current = true;
+    let isActive = true;
+    const activeSession = session;
+    const client = supabase;
+
+    async function migrate() {
+      const marker = await dbGet<{ syncedAt?: string }>('onboardingProfile', 'profile');
+      if (marker?.syncedAt) {
+        if (isActive) setMigrationState('done');
+        return;
+      }
+
+      if (isActive) setMigrationState('migrating');
+      try {
+        await migrateLocalProfileToSupabase(client, {
+          userId: activeSession.user.id,
+          displayName: deriveDisplayName(activeSession.user),
+          profile,
+          scoringResult,
+        });
+        await markSynced('onboardingProfile', 'profile');
+        if (isActive) setMigrationState('done');
+      } catch (error) {
+        if (isActive) {
+          setMigrationState('error');
+          setMigrationError(error instanceof Error ? error.message : 'Gagal menyimpan hasil.');
+        }
+      }
+    }
+
+    migrate();
+    return () => {
+      isActive = false;
+    };
+  }, [session, profile, scoringResult]);
+
+  if (!isSupabaseConfigured) return null;
+
+  if (isSessionLoading) return null;
+
+  if (migrationState === 'done') {
+    return (
+      <Card>
+        <p className="text-sm font-medium text-primary-700">Tersimpan ke akunmu</p>
+        <p className="mt-1 text-sm text-neutral-600">
+          Riwayat akan bertambah setelah kamu mengulang tes atau mencatat pertandingan.
+        </p>
+        <Button variant="ghost" onClick={onViewHistory} className="mt-2 w-full">
+          Lihat riwayat
+        </Button>
+      </Card>
+    );
+  }
+
+  if (migrationState === 'migrating') {
+    return (
+      <Card>
+        <p className="text-sm text-neutral-600">Menyimpan hasil ke akunmu…</p>
+      </Card>
+    );
+  }
+
+  if (migrationState === 'error') {
+    return (
+      <Card>
+        <p role="alert" className="text-sm text-danger-600">
+          {migrationError}
+        </p>
+      </Card>
+    );
+  }
+
+  if (session) return null;
+
+  if (emailSent) {
+    return (
+      <Card>
+        <p className="text-sm text-neutral-700">Cek email kamu — tautan masuk sudah dikirim.</p>
+      </Card>
+    );
+  }
+
+  if (showLoginForm) {
+    return (
+      <Card>
+        <LoginForm onEmailSent={() => setEmailSent(true)} />
+      </Card>
+    );
+  }
+
+  return (
+    <Button variant="secondary" onClick={() => setShowLoginForm(true)} className="w-full">
+      Simpan hasil ini
+    </Button>
+  );
+}

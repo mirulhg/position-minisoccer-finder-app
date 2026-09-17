@@ -46,3 +46,16 @@ export async function dbClear(store: StoreName): Promise<void> {
   const db = await getDb();
   await db.clear(store);
 }
+
+/**
+ * Menandai satu record sudah dikirim ke Supabase, tanpa menghapusnya —
+ * IndexedDB tetap jadi cache offline setelah migrasi (Fase 2). Dipanggil
+ * sekali per record setelah `migrateLocalProfileToSupabase` berhasil,
+ * supaya percobaan migrasi berikutnya tidak insert dobel.
+ */
+export async function markSynced(store: StoreName, key: string): Promise<void> {
+  const existing = await dbGet<Record<string, unknown>>(store, key);
+  if (!existing) return;
+  await dbPut(store, key, { ...existing, syncedAt: new Date().toISOString() });
+}
+

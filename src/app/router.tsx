@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react';
 import { dbGet } from '../lib/db';
+import { useAuthSession } from '../features/auth';
 import { OnboardingFlow, onboardingProfileSchema, type OnboardingProfile } from '../features/onboarding';
 import { QuestionnaireFlow, type AnswerValue } from '../features/questionnaire';
 import { ResultsScreen } from '../features/results';
+import { HistoryScreen } from '../features/history';
 
-type Screen = 'onboarding' | 'questionnaire' | 'results';
+type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history';
 
 export function AppRouter() {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [screen, setScreen] = useState<Screen>('onboarding');
   const [profile, setProfile] = useState<OnboardingProfile | null>(null);
   const [answers, setAnswers] = useState<Record<string, AnswerValue> | null>(null);
+  // Sesi Supabase hanya dipakai untuk membuka layar riwayat (FR-17) —
+  // alur onboarding→kuesioner→hasil di bawah TIDAK pernah dikunci oleh
+  // status login (PRD Lampiran C.1/C.5: aktivasi tidak boleh terhambat
+  // pendaftaran). Login ditawarkan inline di layar hasil, bukan di sini.
+  const { session } = useAuthSession();
 
   useEffect(() => {
     // Sinkronisasi satu kali dengan IndexedDB saat aplikasi dibuka: kalau
@@ -55,8 +62,13 @@ export function AppRouter() {
         physical={profile}
         usualPosition={profile.usualPosition}
         willingGoalkeeper={profile.willingGoalkeeper}
+        onViewHistory={() => setScreen('history')}
       />
     );
+  }
+
+  if (screen === 'history' && session) {
+    return <HistoryScreen userId={session.user.id} onBack={() => setScreen('results')} />;
   }
 
   return null;
