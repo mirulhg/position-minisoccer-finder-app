@@ -33,6 +33,14 @@ function getAnonymousId(): string {
  * — supaya modul ini tidak menarik SDK penuh (dan `auth` chunk) ke bundle
  * awal yang dimuat semua pengunjung sebelum login (lihat perbaikan
  * code-splitting sebelumnya).
+ *
+ * SENGAJA hanya kirim header `apikey`, TIDAK `Authorization: Bearer`. Publishable
+ * key (`sb_publishable_...`) bukan lagi JWT seperti anon key lama — ia string
+ * opak, dan Supabase secara eksplisit mendokumentasikan bahwa key ini hanya
+ * boleh lewat `apikey`. Mengirimnya juga di `Authorization: Bearer` membuat
+ * gateway mencoba mem-parsingnya sebagai JWT dan menolak permintaan. Request
+ * ini memang harus anonim (role `anon`) — itulah gunanya kebijakan RLS
+ * `analytics_events insert anon` di migrasi 0002; jangan tambahkan token lain.
  */
 async function sendEvent(record: AnalyticsRecord): Promise<boolean> {
   const url = import.meta.env.VITE_SUPABASE_URL;
@@ -45,7 +53,6 @@ async function sendEvent(record: AnalyticsRecord): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
         apikey: publishableKey,
-        Authorization: `Bearer ${publishableKey}`,
         Prefer: 'return=minimal',
       },
       body: JSON.stringify(record),
