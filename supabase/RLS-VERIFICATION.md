@@ -36,7 +36,7 @@ Pemain A (kolom `player_id` = uid Pemain A), salin `id`-nya.
 
 ```bash
 curl -s "$VITE_SUPABASE_URL/rest/v1/attribute_profiles?id=eq.<PROFILE_A_ID>" \
-  -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+  -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
   -H "Authorization: Bearer <PLAYER_B_ACCESS_TOKEN>"
 ```
 
@@ -50,7 +50,7 @@ harus `true`).
 
 ```bash
 curl -s -X POST "$VITE_SUPABASE_URL/rest/v1/role_scores" \
-  -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+  -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
   -H "Authorization: Bearer <PLAYER_B_ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"profile_id": "<PROFILE_A_ID>", "role_code": "CB-ST", "base": 50, "gate": 1, "fit": 50}'
@@ -63,7 +63,7 @@ ditolak) — bukan `201 Created`.
 
 ```bash
 curl -s "$VITE_SUPABASE_URL/rest/v1/attribute_profiles?id=eq.<PROFILE_A_ID>" \
-  -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+  -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
   -H "Authorization: Bearer <PLAYER_A_ACCESS_TOKEN>"
 ```
 

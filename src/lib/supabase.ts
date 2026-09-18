@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 /**
  * `false` selama `.env.local` belum diisi (lihat `.env.example`). Fitur
@@ -11,7 +11,7 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
  * (onboarding→kuesioner→hasil) wajib tetap jalan tanpa kredensial sama
  * sekali, termasuk sampai ke layar hasil.
  */
-export const isSupabaseConfigured = Boolean(url && anonKey);
+export const isSupabaseConfigured = Boolean(url && publishableKey);
 
 /**
  * Sesi disimpan otomatis oleh supabase-js (persistSession default true) dan
@@ -20,5 +20,5 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
  * konfigurasi tambahan. `null` kalau kredensial belum diisi.
  */
 export const supabase: SupabaseClient<Database> | null = isSupabaseConfigured
-  ? createClient<Database>(url, anonKey)
+  ? createClient<Database>(url, publishableKey)
   : null;
