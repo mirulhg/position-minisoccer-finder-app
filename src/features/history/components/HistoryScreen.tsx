@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { supabase } from '../../../lib/supabase';
+import { useAuthSession } from '../../auth';
 import { POSITION_NAMES } from '../../scoring';
 import { fetchProfileHistory, type ProfileHistoryEntry } from '../lib/fetch-profile-history';
 
 interface HistoryScreenProps {
-  userId: string;
   onBack: () => void;
 }
 
@@ -14,8 +14,14 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/** Layar 5 (FR-17) — garis waktu vertikal versi profil, terbaru di atas. */
-export function HistoryScreen({ userId, onBack }: HistoryScreenProps) {
+/**
+ * Layar 5 (FR-17) — garis waktu vertikal versi profil, terbaru di atas.
+ * Sesi dibaca di sini (bukan di AppRouter) supaya `@supabase/supabase-js`
+ * hanya ikut ter-bundle ke chunk lazy layar ini/hasil, bukan ke chunk awal
+ * yang dimuat semua pengunjung sebelum login.
+ */
+export function HistoryScreen({ onBack }: HistoryScreenProps) {
+  const { session, isLoading: isSessionLoading } = useAuthSession();
   const [entries, setEntries] = useState<ProfileHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(
     supabase ? null : 'Supabase belum dikonfigurasi.',
@@ -23,11 +29,9 @@ export function HistoryScreen({ userId, onBack }: HistoryScreenProps) {
 
   useEffect(() => {
     // Sinkronisasi dengan Supabase: riwayat dimuat sekali saat layar dibuka.
-    // Layar ini hanya bisa dibuka lewat tombol yang sudah mensyaratkan sesi
-    // aktif, jadi `supabase` seharusnya selalu terkonfigurasi di sini.
-    if (!supabase) return;
+    if (!supabase || !session) return;
     let isMounted = true;
-    fetchProfileHistory(supabase, userId)
+    fetchProfileHistory(supabase, session.user.id)
       .then((result) => {
         if (isMounted) setEntries(result);
       })
@@ -37,13 +41,38 @@ export function HistoryScreen({ userId, onBack }: HistoryScreenProps) {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [session]);
+
+  const backButton = (
+    <Button variant="ghost" onClick={onBack} className="self-start">
+      Kembali ke hasil
+    </Button>
+  );
+
+  if (isSessionLoading) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-8">
+        {backButton}
+        <p className="text-neutral-500">Memuat…</p>
+      </div>
+    );
+  }
+
+  // Layar ini hanya dinavigasi lewat tombol yang mensyaratkan sesi aktif
+  // (lihat SaveResultSection) — kondisi ini jaga-jaga saja, mis. sesi
+  // berakhir tepat saat layar dibuka.
+  if (!session) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-8">
+        {backButton}
+        <p className="text-neutral-500">Masuk dulu untuk melihat riwayat profilmu.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-8">
-      <Button variant="ghost" onClick={onBack} className="self-start">
-        Kembali ke hasil
-      </Button>
+      {backButton}
       <h1 className="text-2xl font-semibold text-neutral-900">Riwayat profil</h1>
 
       {error && (
@@ -66,7 +95,7 @@ export function HistoryScreen({ userId, onBack }: HistoryScreenProps) {
               const previous = entries[index + 1];
               return (
                 <li key={entry.id} className="relative">
-                  <span className="absolute -left-[21px] top-1.5 h-3 w-3 rounded-full bg-primary-600" />
+                  <span className="absolute -left-5.25 top-1.5 h-3 w-3 rounded-full bg-primary-600" />
                   <Card>
                     <p className="text-xs text-neutral-400">{formatDate(entry.createdAt)}</p>
                     <p className="mt-1 text-lg font-semibold text-neutral-900">

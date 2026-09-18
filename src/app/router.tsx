@@ -1,36 +1,50 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { dbGet } from '../lib/db';
-import { useAuthSession } from '../features/auth';
-import { OnboardingFlow, onboardingProfileSchema, type OnboardingProfile } from '../features/onboarding';
-import { QuestionnaireFlow, type AnswerValue } from '../features/questionnaire';
-import { ResultsScreen } from '../features/results';
-import { HistoryScreen } from '../features/history';
+import type { OnboardingProfile } from '../features/onboarding';
+import type { AnswerValue } from '../features/questionnaire';
+
+// Setiap layar dimuat sebagai chunk terpisah (CLAUDE.md §10) — pengunjung
+// baru yang belum sampai ke kuesioner/hasil tidak perlu mengunduh kode
+// hasil, riwayat, atau (lewat fitur itu) @supabase/supabase-js sama sekali.
+const OnboardingFlow = lazy(() =>
+  import('../features/onboarding').then((m) => ({ default: m.OnboardingFlow })),
+);
+const QuestionnaireFlow = lazy(() =>
+  import('../features/questionnaire').then((m) => ({ default: m.QuestionnaireFlow })),
+);
+const ResultsScreen = lazy(() => import('../features/results').then((m) => ({ default: m.ResultsScreen })));
+const HistoryScreen = lazy(() => import('../features/history').then((m) => ({ default: m.HistoryScreen })));
 
 type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history';
+
+function LoadingFallback() {
+  return <p className="p-8 text-center text-neutral-500">Memuat…</p>;
+}
 
 export function AppRouter() {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [screen, setScreen] = useState<Screen>('onboarding');
   const [profile, setProfile] = useState<OnboardingProfile | null>(null);
   const [answers, setAnswers] = useState<Record<string, AnswerValue> | null>(null);
-  // Sesi Supabase hanya dipakai untuk membuka layar riwayat (FR-17) —
-  // alur onboarding→kuesioner→hasil di bawah TIDAK pernah dikunci oleh
-  // status login (PRD Lampiran C.1/C.5: aktivasi tidak boleh terhambat
-  // pendaftaran). Login ditawarkan inline di layar hasil, bukan di sini.
-  const { session } = useAuthSession();
 
   useEffect(() => {
     // Sinkronisasi satu kali dengan IndexedDB saat aplikasi dibuka: kalau
     // profil onboarding sudah lengkap, lewati layar onboarding dan langsung
     // ke kuesioner — kuesioner memulihkan posisi terakhirnya sendiri (FR-06).
-    dbGet<unknown>('onboardingProfile', 'profile').then((stored) => {
-      const parsed = onboardingProfileSchema.safeParse(stored);
-      if (parsed.success) {
-        setProfile(parsed.data);
-        setScreen('questionnaire');
-      }
-      setIsBootstrapping(false);
-    });
+    // `onboardingProfileSchema` diambil lewat import dinamis (bukan import
+    // statis) supaya modul fitur onboarding — termasuk `OnboardingFlow` yang
+    // di-lazy() di atas — tidak ikut tertarik ke chunk awal (lihat peringatan
+    // Rollup "ineffective dynamic import" kalau dua cara impor dicampur).
+    Promise.all([dbGet<unknown>('onboardingProfile', 'profile'), import('../features/onboarding')]).then(
+      ([stored, { onboardingProfileSchema }]) => {
+        const parsed = onboardingProfileSchema.safeParse(stored);
+        if (parsed.success) {
+          setProfile(parsed.data);
+          setScreen('questionnaire');
+        }
+        setIsBootstrapping(false);
+      },
+    );
   }, []);
 
   function handleOnboardingComplete(completedProfile: OnboardingProfile) {
@@ -43,33 +57,38 @@ export function AppRouter() {
     setScreen('results');
   }
 
+  function handleRestart() {
+    // IndexedDB sudah dikosongkan oleh RestartButton sebelum ini dipanggil;
+    // di sini cukup mengembalikan state React ke titik awal.
+    setProfile(null);
+    setAnswers(null);
+    setScreen('onboarding');
+  }
+
   if (isBootstrapping) {
-    return <p className="p-8 text-center text-neutral-500">Memuat…</p>;
+    return <LoadingFallback />;
   }
 
-  if (screen === 'onboarding') {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
-  }
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      {screen === 'onboarding' && <OnboardingFlow onComplete={handleOnboardingComplete} />}
 
-  if (screen === 'questionnaire' && profile) {
-    return <QuestionnaireFlow willingGoalkeeper={profile.willingGoalkeeper} onComplete={handleQuestionnaireComplete} />;
-  }
+      {screen === 'questionnaire' && profile && (
+        <QuestionnaireFlow willingGoalkeeper={profile.willingGoalkeeper} onComplete={handleQuestionnaireComplete} />
+      )}
 
-  if (screen === 'results' && profile && answers) {
-    return (
-      <ResultsScreen
-        answers={answers}
-        physical={profile}
-        usualPosition={profile.usualPosition}
-        willingGoalkeeper={profile.willingGoalkeeper}
-        onViewHistory={() => setScreen('history')}
-      />
-    );
-  }
+      {screen === 'results' && profile && answers && (
+        <ResultsScreen
+          answers={answers}
+          physical={profile}
+          usualPosition={profile.usualPosition}
+          willingGoalkeeper={profile.willingGoalkeeper}
+          onViewHistory={() => setScreen('history')}
+          onRestart={handleRestart}
+        />
+      )}
 
-  if (screen === 'history' && session) {
-    return <HistoryScreen userId={session.user.id} onBack={() => setScreen('results')} />;
-  }
-
-  return null;
+      {screen === 'history' && <HistoryScreen onBack={() => setScreen('results')} />}
+    </Suspense>
+  );
 }
