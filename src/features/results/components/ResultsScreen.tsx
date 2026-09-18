@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { trackEvent } from '../../../lib/analytics';
 import { deriveDisplayName, useAuthSession } from '../../auth';
 import type { AnswerValue } from '../../questionnaire';
 import { ATTRIBUTE_LABELS, POSITION_NAMES, ROLE_METADATA, computeScoringResult, type PhysicalProfile, type PositionCode } from '../../scoring';
@@ -10,8 +11,10 @@ import { RoleCard } from './RoleCard';
 import { WhyBlock } from './WhyBlock';
 import { PillarRadar } from './PillarRadar';
 import { AlternativePosition } from './AlternativePosition';
+import { AllRolesList } from './AllRolesList';
 import { SaveResultSection } from './SaveResultSection';
 import { ResultActions } from './ResultActions';
+import { RestartButton } from './RestartButton';
 
 interface ResultsScreenProps {
   answers: Record<string, AnswerValue>;
@@ -19,15 +22,31 @@ interface ResultsScreenProps {
   usualPosition: PositionCode | null;
   willingGoalkeeper: boolean;
   onViewHistory: () => void;
+  onRestart: () => void;
 }
 
-export function ResultsScreen({ answers, physical, usualPosition, willingGoalkeeper, onViewHistory }: ResultsScreenProps) {
+export function ResultsScreen({
+  answers,
+  physical,
+  usualPosition,
+  willingGoalkeeper,
+  onViewHistory,
+  onRestart,
+}: ResultsScreenProps) {
   const { session } = useAuthSession();
 
   const result = useMemo(() => {
     const input = buildScoringInput(answers, physical, usualPosition, willingGoalkeeper);
     return computeScoringResult(input);
   }, [answers, physical, usualPosition, willingGoalkeeper]);
+
+  useEffect(() => {
+    // Instrumentasi funnel (NFR Observabilitas), fire-and-forget.
+    trackEvent('results_viewed', {
+      position: result.mainPosition.position,
+      confidence_label: result.confidenceLabel,
+    });
+  }, [result]);
 
   const topRolesInMainPosition = useMemo(() => {
     return result.roleScores
@@ -84,11 +103,19 @@ export function ResultsScreen({ answers, physical, usualPosition, willingGoalkee
       )}
 
       <div className="md:col-span-2">
+        <AllRolesList roleScores={result.roleScores} />
+      </div>
+
+      <div className="md:col-span-2">
         <SaveResultSection profile={onboardingProfile} scoringResult={result} onViewHistory={onViewHistory} />
       </div>
 
       <div className="md:col-span-2">
         <ResultActions cardData={cardData} />
+      </div>
+
+      <div className="md:col-span-2 border-t border-neutral-200 pt-6">
+        <RestartButton onRestart={onRestart} />
       </div>
     </div>
   );
