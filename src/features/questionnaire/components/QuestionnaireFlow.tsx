@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { trackEvent } from '../../../lib/analytics';
 import { useQuestionnaireSession } from '../hooks/useQuestionnaireSession';
 import { BlockTransition } from './BlockTransition';
 import { QuestionPage } from './QuestionPage';
@@ -28,13 +29,37 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete }: Questionnai
     useQuestionnaireSession(willingGoalkeeper);
   const [transitionDismissedAt, setTransitionDismissedAt] = useState(-1);
 
+  const pageSize = isDesktop ? 3 : 1;
+  const page = buildPage(questions, currentIndex, pageSize);
+  const previousBlock: QuestionBlock | null = currentIndex > 0 ? questions[currentIndex - 1].block : null;
+  const enteringNewBlock = previousBlock !== null && page.length > 0 && previousBlock !== page[0].block;
+  const showTransition = enteringNewBlock && transitionDismissedAt !== currentIndex;
+  const pageKey = page.map((q) => q.id).join(',');
+
   useEffect(() => {
     // Meneruskan status selesai ke parent saat sesi dipulihkan dari
     // IndexedDB dalam keadaan sudah lengkap (dibuka kembali setelah pernah
     // menyelesaikan seluruh pertanyaan sebelum sempat pindah layar).
-    if (!isLoading && isComplete) onComplete(answers);
+    if (!isLoading && isComplete) {
+      trackEvent('questionnaire_completed');
+      onComplete(answers);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isComplete]);
+
+  useEffect(() => {
+    // Instrumentasi funnel (NFR Observabilitas): satu event per pertanyaan
+    // yang benar-benar tampil (bukan saat layar transisi blok), fire-and-forget.
+    if (isLoading || isComplete || showTransition || page.length === 0) return;
+    for (let i = 0; i < page.length; i += 1) {
+      trackEvent('questionnaire_question_viewed', {
+        question_id: page[i].id,
+        index: currentIndex + i,
+        total: questions.length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isComplete, showTransition, pageKey]);
 
   if (isLoading) {
     return <p className="text-center text-neutral-500">Memuat kuesioner…</p>;
@@ -43,12 +68,6 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete }: Questionnai
   if (isComplete) {
     return null;
   }
-
-  const pageSize = isDesktop ? 3 : 1;
-  const page = buildPage(questions, currentIndex, pageSize);
-  const previousBlock: QuestionBlock | null = currentIndex > 0 ? questions[currentIndex - 1].block : null;
-  const enteringNewBlock = previousBlock !== null && previousBlock !== page[0].block;
-  const showTransition = enteringNewBlock && transitionDismissedAt !== currentIndex;
 
   if (showTransition) {
     return <BlockTransition block={page[0].block} onContinue={() => setTransitionDismissedAt(currentIndex)} />;
@@ -68,7 +87,7 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete }: Questionnai
         <ProgressBar percent={(currentIndex / questions.length) * 100} label="Progres kuesioner" />
       </div>
       <QuestionPage
-        key={page.map((q) => q.id).join(',')}
+        key={pageKey}
         questions={page}
         initialAnswers={answers}
         onSubmit={handleSubmitPage}

@@ -1,11 +1,14 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 const DB_NAME = 'msf-db';
-const DB_VERSION = 1;
+// v2 menambahkan store 'analyticsQueue' — perlu dinaikkan supaya pengguna
+// lama (database v1 sudah ada di perangkatnya) ikut memicu `upgrade` dan
+// mendapatkan store barunya, bukan cuma pengguna baru.
+const DB_VERSION = 2;
 
-export type StoreName = 'onboardingProfile' | 'answers';
+export type StoreName = 'onboardingProfile' | 'answers' | 'analyticsQueue';
 
-const STORE_NAMES: StoreName[] = ['onboardingProfile', 'answers'];
+const STORE_NAMES: StoreName[] = ['onboardingProfile', 'answers', 'analyticsQueue'];
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -45,6 +48,11 @@ export async function dbGetAll<T>(store: StoreName): Promise<T[]> {
 export async function dbClear(store: StoreName): Promise<void> {
   const db = await getDb();
   await db.clear(store);
+}
+
+export async function dbDelete(store: StoreName, key: string): Promise<void> {
+  const db = await getDb();
+  await db.delete(store, key);
 }
 
 /**

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from '../../../lib/analytics';
 import { PhysicalProfileForm } from './PhysicalProfileForm';
 import { PositionPreferenceStep } from './PositionPreferenceStep';
 import { useOnboardingProfile } from '../hooks/useOnboardingProfile';
@@ -14,6 +15,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const { profile, isLoading, saveProfile } = useOnboardingProfile();
   const [step, setStep] = useState<OnboardingStep>('physical');
 
+  useEffect(() => {
+    // Instrumentasi funnel (NFR Observabilitas): dikirim fire-and-forget,
+    // tidak pernah mem-block render langkah onboarding.
+    if (!isLoading) trackEvent('onboarding_step_viewed', { step });
+  }, [step, isLoading]);
+
   if (isLoading) {
     return <p className="text-center text-neutral-500">Memuat profil…</p>;
   }
@@ -26,6 +33,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   async function handlePositionSubmit(values: { usualPosition: OnboardingProfile['usualPosition']; willingGoalkeeper: boolean }) {
     await saveProfile(values);
     const merged = { ...profile, ...values };
+    trackEvent('onboarding_completed');
     onComplete(merged as OnboardingProfile);
   }
 
