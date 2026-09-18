@@ -1,18 +1,22 @@
 import { useRef, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
+import { useAuthSession } from '../../auth';
 import { drawProfileCard, shareProfileCard, type ProfileCardData } from '../lib/profile-card-canvas';
 
 interface ResultActionsProps {
   cardData: ProfileCardData;
+  onLogMatch: () => void;
 }
 
 /**
- * "Catat pertandingan pertama" tetap nonaktif — itu Fase 3 (blending),
- * bukan bagian tugas ini. "Bagikan kartu profil" (FR-18) sudah aktif:
- * canvas 1080x1350 di-render lalu dibagikan lewat Web Share API, fallback
- * unduh PNG kalau browser tidak mendukung.
+ * "Bagikan kartu profil" (FR-18) aktif untuk siapa saja: canvas 1080x1350
+ * di-render lalu dibagikan lewat Web Share API, fallback unduh PNG. "Catat
+ * pertandingan" (FR-14, Fase 3) butuh akun — `matches.player_id` mengacu ke
+ * `players`, jadi tombolnya nonaktif dengan keterangan sampai pemain login
+ * dan menyimpan hasil (lihat `SaveResultSection`).
  */
-export function ResultActions({ cardData }: ResultActionsProps) {
+export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
+  const { session } = useAuthSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +48,15 @@ export function ResultActions({ cardData }: ResultActionsProps) {
           {error}
         </p>
       )}
-      <Button variant="secondary" disabled className="w-full" title="Segera hadir">
-        Catat pertandingan pertama — segera hadir
-      </Button>
+      {session ? (
+        <Button variant="secondary" onClick={onLogMatch} className="w-full">
+          Catat pertandingan
+        </Button>
+      ) : (
+        <Button variant="secondary" disabled className="w-full" title="Simpan hasil dulu untuk mencatat pertandingan">
+          Catat pertandingan — simpan hasil dulu
+        </Button>
+      )}
     </div>
   );
 }

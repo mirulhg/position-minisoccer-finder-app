@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { trackEvent } from '../../../lib/analytics';
 import { deriveDisplayName, useAuthSession } from '../../auth';
+import { PositionChangeBanner } from '../../history';
 import type { AnswerValue } from '../../questionnaire';
 import { ATTRIBUTE_LABELS, POSITION_NAMES, ROLE_METADATA, computeScoringResult, type PhysicalProfile, type PositionCode } from '../../scoring';
 import { buildScoringInput } from '../lib/answers-to-scoring-input';
@@ -23,6 +24,7 @@ interface ResultsScreenProps {
   willingGoalkeeper: boolean;
   onViewHistory: () => void;
   onRestart: () => void;
+  onLogMatch: () => void;
 }
 
 export function ResultsScreen({
@@ -32,6 +34,7 @@ export function ResultsScreen({
   willingGoalkeeper,
   onViewHistory,
   onRestart,
+  onLogMatch,
 }: ResultsScreenProps) {
   const { session } = useAuthSession();
 
@@ -81,6 +84,10 @@ export function ResultsScreen({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 md:grid md:grid-cols-2 md:gap-6">
       <div className="md:col-span-2">
+        <PositionChangeBanner />
+      </div>
+
+      <div className="md:col-span-2">
         <MainPositionHeader positionScore={result.mainPosition} confidenceLabel={result.confidenceLabel} />
       </div>
 
@@ -111,7 +118,7 @@ export function ResultsScreen({
       </div>
 
       <div className="md:col-span-2">
-        <ResultActions cardData={cardData} />
+        <ResultActions cardData={cardData} onLogMatch={onLogMatch} />
       </div>
 
       <div className="md:col-span-2 border-t border-neutral-200 pt-6">

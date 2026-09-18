@@ -3,7 +3,6 @@ export { LoginForm } from './components/LoginForm';
 export { deriveDisplayName } from './lib/derive-display-name';
 export {
   migrateLocalProfileToSupabase,
-  SCORING_CONFIG_VERSION,
   type MigrateLocalProfileInput,
   type MigrateLocalProfileResult,
 } from './lib/migrate-local-profile';

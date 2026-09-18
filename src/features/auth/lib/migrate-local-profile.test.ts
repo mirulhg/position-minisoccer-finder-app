@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../lib/database.types';
 import type { OnboardingProfile } from '../../onboarding';
-import type { ScoringResult } from '../../scoring';
-import { migrateLocalProfileToSupabase, SCORING_CONFIG_VERSION } from './migrate-local-profile.ts';
+import { SCORING_CONFIG_VERSION, type ScoringResult } from '../../scoring';
+import { migrateLocalProfileToSupabase } from './migrate-local-profile';
 
 interface FakeCall {
   table: string;
@@ -64,12 +64,14 @@ const FAKE_PROFILE: OnboardingProfile = {
 
 const FAKE_SCORING_RESULT: ScoringResult = {
   attributes: { TKL: 77, STR: 71, FIN: 38 },
+  questionnaireAttributes: { TKL: 75, STR: 70, FIN: 40 },
   roleScores: [
     { role: 'CB-ST', base: 69, gate: 1, fit: 69 },
     { role: 'CM-B2B', base: 66.5, gate: 1, fit: 66.5 },
   ],
   positionScores: [{ position: 'CB', score: 69, bestRole: 'CB-ST', secondRole: null }],
   mainPosition: { position: 'CB', score: 69, bestRole: 'CB-ST', secondRole: null },
+  reliability: 0.86,
   confidence: 0.3,
   confidenceLabel: 'Awal',
 };
@@ -102,9 +104,13 @@ test('migrateLocalProfileToSupabase mengirim payload yang benar ke tiga tabel', 
   assert.deepEqual(profileCall?.payload, {
     player_id: 'user-1',
     atribut: { TKL: 77, STR: 71, FIN: 38 },
+    atribut_kuesioner: { TKL: 75, STR: 70, FIN: 40 },
+    reliability: 0.86,
     confidence: 0.3,
     versi_konfigurasi: SCORING_CONFIG_VERSION,
     posisi_biasa: 'CB',
+    posisi_utama_code: 'CB',
+    role_utama_code: 'CB-ST',
   });
 
   const roleScoresCall = calls.find((c) => c.table === 'role_scores');

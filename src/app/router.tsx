@@ -14,8 +14,9 @@ const QuestionnaireFlow = lazy(() =>
 );
 const ResultsScreen = lazy(() => import('../features/results').then((m) => ({ default: m.ResultsScreen })));
 const HistoryScreen = lazy(() => import('../features/history').then((m) => ({ default: m.HistoryScreen })));
+const MatchInputScreen = lazy(() => import('../features/matches').then((m) => ({ default: m.MatchInputScreen })));
 
-type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history';
+type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history' | 'match-input';
 
 function LoadingFallback() {
   return <p className="p-8 text-center text-neutral-500">Memuat…</p>;
@@ -85,10 +86,15 @@ export function AppRouter() {
           willingGoalkeeper={profile.willingGoalkeeper}
           onViewHistory={() => setScreen('history')}
           onRestart={handleRestart}
+          onLogMatch={() => setScreen('match-input')}
         />
       )}
 
       {screen === 'history' && <HistoryScreen onBack={() => setScreen('results')} />}
+
+      {screen === 'match-input' && (
+        <MatchInputScreen onDone={() => setScreen('results')} onBack={() => setScreen('results')} />
+      )}
     </Suspense>
   );
 }

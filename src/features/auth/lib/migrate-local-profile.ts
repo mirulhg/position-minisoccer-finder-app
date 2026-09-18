@@ -1,14 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../lib/database.types';
 import type { OnboardingProfile } from '../../onboarding';
-import type { AttributeVector, ScoringResult } from '../../scoring';
-
-/**
- * Harus sama dengan `versi` yang di-seed di
- * supabase/migrations/0001_init.sql — Fase 2 baru punya satu baris
- * scoring_configs (placeholder Fase 0), belum ada mekanisme pilih versi.
- */
-export const SCORING_CONFIG_VERSION = 'fase0-placeholder';
+import { SCORING_CONFIG_VERSION, toPlainAttributeMap, type ScoringResult } from '../../scoring';
 
 export interface MigrateLocalProfileInput {
   userId: string;
@@ -20,14 +13,6 @@ export interface MigrateLocalProfileInput {
 export interface MigrateLocalProfileResult {
   playerId: string;
   profileId: string;
-}
-
-function toPlainAttributeMap(attributes: AttributeVector): Record<string, number> {
-  const plain: Record<string, number> = {};
-  for (const [attribute, value] of Object.entries(attributes)) {
-    if (value !== undefined) plain[attribute] = value;
-  }
-  return plain;
 }
 
 /**
@@ -60,9 +45,16 @@ export async function migrateLocalProfileToSupabase(
     .insert({
       player_id: userId,
       atribut: toPlainAttributeMap(scoringResult.attributes),
+      // Q_i murni sebelum blend+normalize — lihat komentar `questionnaireAttributes`
+      // di ScoringResult. Fase 3 mem-blend ulang nilai INI (bukan `atribut`)
+      // dengan statistik pertandingan baru.
+      atribut_kuesioner: toPlainAttributeMap(scoringResult.questionnaireAttributes),
+      reliability: scoringResult.reliability,
       confidence: scoringResult.confidence,
       versi_konfigurasi: SCORING_CONFIG_VERSION,
       posisi_biasa: profile.usualPosition,
+      posisi_utama_code: scoringResult.mainPosition.position,
+      role_utama_code: scoringResult.mainPosition.bestRole,
     })
     .select('id')
     .single();

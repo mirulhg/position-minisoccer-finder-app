@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthSession } from '../../auth';
 import { POSITION_NAMES } from '../../scoring';
 import { fetchProfileHistory, type ProfileHistoryEntry } from '../lib/fetch-profile-history';
+import { PositionChangeBanner } from './PositionChangeBanner';
 
 interface HistoryScreenProps {
   onBack: () => void;
@@ -74,6 +75,8 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-8">
       {backButton}
       <h1 className="text-2xl font-semibold text-neutral-900">Riwayat profil</h1>
+
+      <PositionChangeBanner />
 
       {error && (
         <p role="alert" className="text-sm text-danger-600">

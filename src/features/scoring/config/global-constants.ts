@@ -7,3 +7,10 @@ export const OSCILLATION_DAMPING_THRESHOLD = 4.0;
 export const FLEXIBILITY_BONUS = 0.15;
 export const PHYSICAL_ADJUSTMENT_CAP = 12;
 export const COHORT_MIN_SAMPLES = 200;
+
+/**
+ * Harus sama dengan `versi` yang di-seed di
+ * supabase/migrations/0001_init.sql — baru ada satu baris scoring_configs
+ * (placeholder Fase 0), belum ada mekanisme pilih versi.
+ */
+export const SCORING_CONFIG_VERSION = 'fase0-placeholder';

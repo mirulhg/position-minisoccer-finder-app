@@ -1,4 +1,4 @@
-import { dbDelete, dbGetAll, dbPut } from './db';
+import { createOfflineQueue } from './offline-queue';
 
 const ANONYMOUS_ID_STORAGE_KEY = 'msf-anonymous-id';
 
@@ -7,11 +7,6 @@ interface AnalyticsRecord {
   player_id: string | null;
   event_name: string;
   event_data: Record<string, unknown> | null;
-}
-
-interface QueuedAnalyticsEvent {
-  id: string;
-  record: AnalyticsRecord;
 }
 
 /**
@@ -62,19 +57,10 @@ async function sendEvent(record: AnalyticsRecord): Promise<boolean> {
   }
 }
 
-async function enqueue(record: AnalyticsRecord): Promise<void> {
-  const id = crypto.randomUUID();
-  await dbPut('analyticsQueue', id, { id, record } satisfies QueuedAnalyticsEvent);
-}
+const analyticsQueue = createOfflineQueue<AnalyticsRecord>('analyticsQueue', sendEvent);
 
 /** Mencoba kirim ulang semua event yang tertunda (offline saat dicatat). */
-export async function flushAnalyticsQueue(): Promise<void> {
-  const queued = await dbGetAll<QueuedAnalyticsEvent>('analyticsQueue');
-  for (const item of queued) {
-    const sent = await sendEvent(item.record);
-    if (sent) await dbDelete('analyticsQueue', item.id);
-  }
-}
+export const flushAnalyticsQueue = analyticsQueue.flush;
 
 /**
  * Fire-and-forget: TIDAK PERNAH di-`await` oleh pemanggil, TIDAK PERNAH
@@ -90,16 +76,5 @@ export function trackEvent(eventName: string, eventData?: Record<string, unknown
     event_data: eventData ?? null,
   };
 
-  void sendEvent(record).then((sent) => {
-    if (!sent) return enqueue(record);
-  });
-}
-
-if (typeof window !== 'undefined') {
-  // Sinkronisasi dengan status jaringan browser: begitu kembali online,
-  // coba kosongkan antrean event yang gagal terkirim saat offline.
-  window.addEventListener('online', () => {
-    void flushAnalyticsQueue();
-  });
-  void flushAnalyticsQueue();
+  void analyticsQueue.sendOrQueue(record);
 }

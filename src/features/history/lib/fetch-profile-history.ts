@@ -11,9 +11,13 @@ export interface ProfileHistoryEntry {
 
 /**
  * FR-17 — riwayat profil, terbaru di atas, minimal 10 versi terakhir.
- * Posisi utama per versi dihitung ulang lewat fungsi Tahap 6 yang sudah ada
- * (`computePositionScores`/`pickMainPosition`), bukan logika baru — hanya
- * `role_scores` yang tersimpan yang diberi bentuk ulang jadi `RoleScore[]`.
+ *
+ * Posisi utama: baris Fase 3+ punya `posisi_utama_code` tersimpan — itu
+ * keputusan FINAL setelah peredam osilasi (`shouldSwitchMainPosition`),
+ * yang tidak bisa direkonstruksi ulang dari `role_scores` saja (butuh tahu
+ * posisi baris sebelumnya). Baris pra-Fase-3 (`posisi_utama_code` null)
+ * fallback ke `pickMainPosition` seperti sebelumnya — sah karena peredam
+ * osilasi memang belum pernah aktif sebelum Fase 3 (baru satu kali hitung).
  */
 export async function fetchProfileHistory(
   supabase: SupabaseClient<Database>,
@@ -21,7 +25,7 @@ export async function fetchProfileHistory(
 ): Promise<ProfileHistoryEntry[]> {
   const { data: profiles, error: profilesError } = await supabase
     .from('attribute_profiles')
-    .select('id, dibuat_pada, confidence, posisi_biasa')
+    .select('id, dibuat_pada, confidence, posisi_biasa, posisi_utama_code')
     .eq('player_id', userId)
     .order('dibuat_pada', { ascending: false })
     .limit(10);
@@ -46,10 +50,13 @@ export async function fetchProfileHistory(
       }));
 
     const positionScores = computePositionScores(roleScores);
-    const mainPosition = pickMainPosition(positionScores, {
-      roleScores,
-      usualPosition: (profile.posisi_biasa as PositionScore['position'] | null) ?? null,
-    });
+    const storedPosition = positionScores.find((score) => score.position === profile.posisi_utama_code);
+    const mainPosition =
+      storedPosition ??
+      pickMainPosition(positionScores, {
+        roleScores,
+        usualPosition: (profile.posisi_biasa as PositionScore['position'] | null) ?? null,
+      });
 
     return {
       id: profile.id,

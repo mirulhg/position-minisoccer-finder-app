@@ -38,18 +38,31 @@ export interface Database {
           player_id: string;
           dibuat_pada: string;
           atribut: Record<string, number>;
+          // Q_i murni — null hanya untuk baris pra-Fase-3 (lihat migrasi 0003).
+          atribut_kuesioner: Record<string, number> | null;
+          reliability: number | null;
           confidence: number;
           versi_konfigurasi: string;
           posisi_biasa: string | null;
+          posisi_utama_code: string | null;
+          role_utama_code: string | null;
+          position_changed: boolean;
+          change_acknowledged_at: string | null;
         };
         Insert: {
           id?: string;
           player_id: string;
           dibuat_pada?: string;
           atribut: Record<string, number>;
+          atribut_kuesioner: Record<string, number>;
+          reliability: number;
           confidence: number;
           versi_konfigurasi: string;
           posisi_biasa: string | null;
+          posisi_utama_code?: string | null;
+          role_utama_code?: string | null;
+          position_changed?: boolean;
+          change_acknowledged_at?: string | null;
         };
         Update: Partial<Database['public']['Tables']['attribute_profiles']['Insert']>;
         Relationships: [];
@@ -70,6 +83,45 @@ export interface Database {
           fit: number;
         };
         Update: Partial<Database['public']['Tables']['role_scores']['Insert']>;
+        Relationships: [];
+      };
+      matches: {
+        Row: {
+          id: string;
+          player_id: string;
+          tanggal: string;
+          menit_bermain: number;
+          posisi_dimainkan: string;
+          gol: number | null;
+          assist: number | null;
+          peluang_diciptakan: number | null;
+          tekel_berhasil: number | null;
+          intersep: number | null;
+          duel_udara_menang: number | null;
+          kehilangan_bola: number | null;
+          pelanggaran: number | null;
+          clean_sheet: boolean | null;
+          penilaian_diri: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          player_id: string;
+          tanggal?: string;
+          menit_bermain: number;
+          posisi_dimainkan: string;
+          gol?: number | null;
+          assist?: number | null;
+          peluang_diciptakan?: number | null;
+          tekel_berhasil?: number | null;
+          intersep?: number | null;
+          duel_udara_menang?: number | null;
+          kehilangan_bola?: number | null;
+          pelanggaran?: number | null;
+          clean_sheet?: boolean | null;
+          penilaian_diri?: number | null;
+        };
+        Update: Partial<Database['public']['Tables']['matches']['Insert']>;
         Relationships: [];
       };
       scoring_configs: {
