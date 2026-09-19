@@ -15,6 +15,9 @@ export function RoleCard({ roleScore }: RoleCardProps) {
         <span className="text-lg font-semibold text-primary-700">{Math.round(roleScore.fit)}</span>
       </div>
       <p className="mt-1 text-sm text-neutral-600">{metadata.description}</p>
+      <p className="mt-2 text-xs text-neutral-500">
+        <span className="font-medium text-neutral-600">Gaya main mirip:</span> {metadata.proExample}
+      </p>
     </Card>
   );
 }
