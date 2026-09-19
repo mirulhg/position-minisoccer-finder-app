@@ -11,7 +11,9 @@ import {
   type AttributeVector,
   type RoleScore,
 } from '../../scoring';
-import { recalculateProfile } from './recalculate-profile';
+import { recalculateProfile, retakeQuestionnaire } from './recalculate-profile';
+import type { OnboardingProfile } from '../../onboarding';
+import type { ScoringResult } from '../../scoring';
 
 type AttributeProfileRow = Database['public']['Tables']['attribute_profiles']['Row'];
 type RoleScoreRow = Database['public']['Tables']['role_scores']['Row'];
@@ -31,6 +33,14 @@ interface RecordedInsert {
 function createFakeSupabase(config: FakeConfig, inserts: RecordedInsert[]): SupabaseClient<Database> {
   return {
     from(table: string) {
+      if (table === 'players') {
+        return {
+          upsert: (payload: unknown) => {
+            inserts.push({ table: 'players', payload });
+            return Promise.resolve({ error: null });
+          },
+        };
+      }
       if (table === 'attribute_profiles') {
         return {
           select: () => ({
@@ -250,6 +260,105 @@ test('recalculateProfile: peredam osilasi — kandidat baru baru unggul ≥4 poi
   // sama -> posisi utama tetap CB.
   assert.equal(result.mainPosition.position, 'CB');
   assert.equal(result.positionChanged, false);
+});
+
+const RETAKE_PROFILE: OnboardingProfile = {
+  heightCm: 178,
+  weightKg: 74,
+  age: 24,
+  dominantFoot: 'kanan',
+  usualPosition: 'CB',
+  willingGoalkeeper: false,
+};
+
+test('retakeQuestionnaire: mem-blend Q_i baru dengan S_i yang sudah terakumulasi, bukan sekadar salinan kuesioner', async () => {
+  const inserts: RecordedInsert[] = [];
+  // Q_i BARU (kuesioner yang baru saja diisi ulang) — TKL sengaja rendah.
+  const newQuestionnaireAttributes = { TKL: 10, STR: 50, FIN: 50 };
+  const scoringResult: ScoringResult = {
+    attributes: newQuestionnaireAttributes,
+    questionnaireAttributes: newQuestionnaireAttributes,
+    roleScores: [],
+    positionScores: [],
+    mainPosition: { position: 'CB', score: 50, bestRole: 'CB-ST', secondRole: null },
+    reliability: 0.8,
+    confidence: 0.28,
+    confidenceLabel: 'Awal',
+  };
+
+  const supabase = createFakeSupabase(
+    {
+      attributeProfilesRows: [
+        {
+          id: 'profile-old',
+          atribut_kuesioner: { TKL: 60, STR: 50, FIN: 50 },
+          atribut: { TKL: 60, STR: 50, FIN: 50 },
+          reliability: 0.7,
+          posisi_biasa: 'CB',
+          posisi_utama_code: 'CB',
+        },
+      ],
+      roleScoreRows: [],
+      // Riwayat pertandingan dengan tekel_berhasil TINGGI dan konsisten —
+      // S_i.TKL yang dihasilkan jauh dari Q_i baru (10) di atas.
+      matchRows: Array.from({ length: 5 }, () => ({
+        menit_bermain: 40,
+        posisi_dimainkan: 'CB',
+        tekel_berhasil: 80,
+      })),
+    },
+    inserts,
+  );
+
+  await retakeQuestionnaire(supabase, {
+    userId: 'user-1',
+    displayName: 'Rizky',
+    profile: RETAKE_PROFILE,
+    scoringResult,
+  });
+
+  const playersUpsert = inserts.find((i) => i.table === 'players');
+  assert.ok(playersUpsert, 'players harus di-upsert (nama, tinggi, dsb.)');
+
+  const profileInsert = inserts.find((i) => i.table === 'attribute_profiles');
+  const payload = profileInsert?.payload as Record<string, unknown>;
+
+  // atribut_kuesioner = Q_i baru murni, tidak terpengaruh blend.
+  assert.deepEqual(payload.atribut_kuesioner, newQuestionnaireAttributes);
+
+  // atribut (hasil blend+normalize) TIDAK BOLEH sama dengan seandainya S_i
+  // diabaikan — itu berarti bug lama (retake membuang S_i) masih ada.
+  const tklIfSiIgnored = normalizeToCohort(newQuestionnaireAttributes).TKL as number;
+  const actualTkl = (payload.atribut as Record<string, number>).TKL;
+  assert.notEqual(actualTkl, tklIfSiIgnored);
+  // S_i.TKL jauh lebih tinggi dari Q_i.TKL baru, jadi hasil blend harus
+  // tertarik ke ATAS dibanding seandainya S_i diabaikan.
+  assert.ok(actualTkl > tklIfSiIgnored);
+});
+
+test('retakeQuestionnaire: menolak dipakai untuk pemain yang belum punya riwayat profil sama sekali', async () => {
+  const scoringResult: ScoringResult = {
+    attributes: QUESTIONNAIRE_ATTRIBUTES,
+    questionnaireAttributes: QUESTIONNAIRE_ATTRIBUTES,
+    roleScores: [],
+    positionScores: [],
+    mainPosition: { position: 'CB', score: 50, bestRole: 'CB-ST', secondRole: null },
+    reliability: 0.8,
+    confidence: 0.28,
+    confidenceLabel: 'Awal',
+  };
+  const supabase = createFakeSupabase({ attributeProfilesRows: [] }, []);
+
+  await assert.rejects(
+    () =>
+      retakeQuestionnaire(supabase, {
+        userId: 'user-1',
+        displayName: 'Rizky',
+        profile: RETAKE_PROFILE,
+        scoringResult,
+      }),
+    /hanya untuk pemain yang sudah punya riwayat profil/,
+  );
 });
 
 test('recalculateProfile: melempar error kalau belum ada profil sama sekali', async () => {

@@ -4,6 +4,10 @@ import { Card } from '../../../components/ui/Card';
 import { dbGet, markSynced } from '../../../lib/db';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 import { deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
+// Deep import, bukan lewat barrel `../../matches` — lihat komentar di
+// features/matches/index.ts (menghindari menarik MatchInputScreen dan
+// dependensinya ke chunk layar hasil).
+import { retakeQuestionnaire } from '../../matches/lib/recalculate-profile';
 import type { OnboardingProfile } from '../../onboarding';
 import type { ScoringResult } from '../../scoring';
 
@@ -49,12 +53,39 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
 
       if (isActive) setMigrationState('migrating');
       try {
-        await migrateLocalProfileToSupabase(client, {
-          userId: activeSession.user.id,
-          displayName: deriveDisplayName(activeSession.user),
-          profile,
-          scoringResult,
-        });
+        const displayName = deriveDisplayName(activeSession.user);
+        const userId = activeSession.user.id;
+
+        // FR-19 — pemain yang sudah punya ≥1 baris riwayat menekan "Mulai
+        // ulang dari awal" lalu isi kuesioner lagi: itu tes ulang, bukan
+        // simpan pertama kali. `migrateLocalProfileToSupabase` menghitung
+        // scoringResult murni dari kuesioner (tanpa S_i) — memanggilnya di
+        // sini akan diam-diam membuang seluruh akumulasi statistik
+        // pertandingan (bertentangan dengan migrasi 0003: "jawaban baru
+        // menggantikan Q_i sepenuhnya, sementara S_i tetap terakumulasi").
+        // `retakeQuestionnaire` mem-blend ulang Q_i baru ini dengan S_i yang
+        // sudah ada lewat pipeline yang sama seperti rekalkulasi pasca-
+        // pertandingan.
+        const { data: existingProfiles, error: existingProfilesError } = await client
+          .from('attribute_profiles')
+          .select('id')
+          .eq('player_id', userId)
+          .limit(1);
+        if (existingProfilesError) {
+          throw new Error(`Gagal memeriksa riwayat profil: ${existingProfilesError.message}`);
+        }
+
+        if (existingProfiles && existingProfiles.length > 0) {
+          await retakeQuestionnaire(client, { userId, displayName, profile, scoringResult });
+        } else {
+          await migrateLocalProfileToSupabase(client, {
+            userId,
+            displayName,
+            profile,
+            scoringResult,
+          });
+        }
+
         await markSynced('onboardingProfile', 'profile');
         if (isActive) setMigrationState('done');
       } catch (error) {
