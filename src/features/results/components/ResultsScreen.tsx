@@ -3,10 +3,17 @@ import { trackEvent } from '../../../lib/analytics';
 import { deriveDisplayName, useAuthSession } from '../../auth';
 import { PositionChangeBanner } from '../../history';
 import type { AnswerValue } from '../../questionnaire';
-import { ATTRIBUTE_LABELS, POSITION_NAMES, ROLE_METADATA, computeScoringResult, type PhysicalProfile, type PositionCode } from '../../scoring';
+import {
+  ATTRIBUTE_LABELS,
+  POSITION_NAMES,
+  ROLE_METADATA,
+  computePillarAverages,
+  computeScoringResult,
+  rankAttributesDescending,
+  type PhysicalProfile,
+  type PositionCode,
+} from '../../scoring';
 import { buildScoringInput } from '../lib/answers-to-scoring-input';
-import { computePillarAverages } from '../lib/pillar-averages';
-import { rankAttributesDescending } from '../lib/attribute-ranking';
 import { MainPositionHeader } from './MainPositionHeader';
 import { RoleCard } from './RoleCard';
 import { WhyBlock } from './WhyBlock';

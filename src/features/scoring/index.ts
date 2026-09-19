@@ -38,3 +38,5 @@ export {
   type MatchStatsConversionResult,
 } from './pipeline/match-stats-conversion';
 export { toPlainAttributeMap } from './lib/attribute-vector';
+export { computePillarAverages } from './lib/pillar-averages';
+export { rankAttributesDescending } from './lib/attribute-ranking';

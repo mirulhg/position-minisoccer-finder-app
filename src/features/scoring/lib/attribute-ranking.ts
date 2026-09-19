@@ -1,4 +1,4 @@
-import type { AttributeCode, AttributeVector } from '../../scoring';
+import type { AttributeCode, AttributeVector } from '../types';
 
 /** Atribut terisi, terurut menurun berdasarkan nilai. */
 export function rankAttributesDescending(attributes: AttributeVector): [AttributeCode, number][] {

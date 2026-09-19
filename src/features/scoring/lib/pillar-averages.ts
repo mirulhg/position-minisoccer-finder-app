@@ -1,4 +1,5 @@
-import { ATTRIBUTE_PILLARS, PILLARS, type AttributeVector, type Pillar } from '../../scoring';
+import { ATTRIBUTE_PILLARS, PILLARS } from '../config/attributes';
+import type { AttributeVector, Pillar } from '../types';
 
 export function computePillarAverages(attributes: AttributeVector): Record<Pillar, number> {
   const sums: Record<Pillar, { total: number; count: number }> = {

@@ -1,6 +1,5 @@
 import { Card } from '../../../components/ui/Card';
-import { ATTRIBUTE_LABELS, type AttributeVector } from '../../scoring';
-import { rankAttributesDescending } from '../lib/attribute-ranking';
+import { ATTRIBUTE_LABELS, rankAttributesDescending, type AttributeVector } from '../../scoring';
 
 interface WhyBlockProps {
   attributes: AttributeVector;
