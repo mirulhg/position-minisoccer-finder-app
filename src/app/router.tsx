@@ -15,8 +15,9 @@ const QuestionnaireFlow = lazy(() =>
 const ResultsScreen = lazy(() => import('../features/results').then((m) => ({ default: m.ResultsScreen })));
 const HistoryScreen = lazy(() => import('../features/history').then((m) => ({ default: m.HistoryScreen })));
 const MatchInputScreen = lazy(() => import('../features/matches').then((m) => ({ default: m.MatchInputScreen })));
+const AccountScreen = lazy(() => import('../features/account').then((m) => ({ default: m.AccountScreen })));
 
-type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history' | 'match-input';
+type Screen = 'onboarding' | 'questionnaire' | 'results' | 'history' | 'match-input' | 'account';
 
 function LoadingFallback() {
   return <p className="p-8 text-center text-neutral-500">Memuat…</p>;
@@ -66,6 +67,15 @@ export function AppRouter() {
     setScreen('onboarding');
   }
 
+  function handleDataDeleted() {
+    // FR-20 — AccountScreen sudah menghapus data Supabase + IndexedDB +
+    // sesi sebelum memanggil ini; di sini cukup mengembalikan state React
+    // ke titik awal, sama seperti handleRestart.
+    setProfile(null);
+    setAnswers(null);
+    setScreen('onboarding');
+  }
+
   if (isBootstrapping) {
     return <LoadingFallback />;
   }
@@ -90,10 +100,16 @@ export function AppRouter() {
         />
       )}
 
-      {screen === 'history' && <HistoryScreen onBack={() => setScreen('results')} />}
+      {screen === 'history' && (
+        <HistoryScreen onBack={() => setScreen('results')} onManageAccount={() => setScreen('account')} />
+      )}
 
       {screen === 'match-input' && (
         <MatchInputScreen onDone={() => setScreen('results')} onBack={() => setScreen('results')} />
+      )}
+
+      {screen === 'account' && (
+        <AccountScreen onBack={() => setScreen('history')} onDataDeleted={handleDataDeleted} />
       )}
     </Suspense>
   );

@@ -11,6 +11,7 @@ import { PositionChangeBanner } from './PositionChangeBanner';
 
 interface HistoryScreenProps {
   onBack: () => void;
+  onManageAccount: () => void;
 }
 
 function formatDate(iso: string): string {
@@ -23,7 +24,7 @@ function formatDate(iso: string): string {
  * hanya ikut ter-bundle ke chunk lazy layar ini/hasil, bukan ke chunk awal
  * yang dimuat semua pengunjung sebelum login.
  */
-export function HistoryScreen({ onBack }: HistoryScreenProps) {
+export function HistoryScreen({ onBack, onManageAccount }: HistoryScreenProps) {
   const { session, isLoading: isSessionLoading } = useAuthSession();
   const [entries, setEntries] = useState<ProfileHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(
@@ -208,6 +209,12 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
           </ol>
         </>
       )}
+
+      <div className="border-t border-neutral-200 pt-4">
+        <Button variant="ghost" onClick={onManageAccount} className="w-full text-sm">
+          Kelola akun & data
+        </Button>
+      </div>
     </div>
   );
 }
