@@ -77,20 +77,25 @@ harus ada). Pakai token Pemain A dan Pemain B dari langkah 1-2.
 
 ### 7a. Pemain A mencatat satu pertandingan
 
+`player_id` HARUS diisi eksplisit di body dan harus sama persis dengan
+`auth.uid()` token Pemain A (server TIDAK mengisi nilai ini secara otomatis
+— kebijakan `with check (player_id = auth.uid())` cuma memvalidasi nilai
+yang benar-benar kamu kirim, bukan mekanisme pengisian default; body tanpa
+`player_id` akan ditolak dengan kode `42501`, bukan diterima). Ambil
+`<UID_PLAYER_A>` dari kolom `id` Pemain A di tabel `players` lewat Table
+Editor, atau decode field `sub` dari JWT token Pemain A.
+
 ```bash
 curl -s -X POST "$VITE_SUPABASE_URL/rest/v1/matches" \
   -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
   -H "Authorization: Bearer <PLAYER_A_ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -H "Prefer: return=representation" \
-  -d '{"menit_bermain": 40, "posisi_dimainkan": "CM", "tekel_berhasil": 3}'
+  -d '{"player_id": "<UID_PLAYER_A>", "menit_bermain": 40, "posisi_dimainkan": "CM", "tekel_berhasil": 3}'
 ```
 
 **Harus `201 Created`** dan mengembalikan baris dengan `player_id` = uid
-Pemain A (server mengisi `player_id` dari `with check (player_id = auth.uid())`
-— kalau kamu kirim `player_id` pemain lain di body, insert-nya tetap ditolak
-karena `with check` memeriksa nilai yang benar-benar disimpan). Salin `id`
-baris ini sebagai `<MATCH_A_ID>`.
+Pemain A. Salin `id` baris ini sebagai `<MATCH_A_ID>`.
 
 ### 7b. Pemain B mencoba membaca pertandingan Pemain A
 
