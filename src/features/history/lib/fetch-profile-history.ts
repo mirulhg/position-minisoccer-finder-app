@@ -53,6 +53,12 @@ export async function fetchProfileHistory(
     const storedPosition = positionScores.find((score) => score.position === profile.posisi_utama_code);
     const mainPosition =
       storedPosition ??
+      // `matches` SENGAJA tidak diisi di sini (langkah 2 tie-break selalu
+      // seri, fallback ke langkah 3 seperti sebelumnya). Ini merekonstruksi
+      // posisi utama baris LAMA pra-Fase-3 — menyuntikkan jumlah
+      // pertandingan pemain SAAT INI tidak akurat secara historis, karena
+      // pertandingan itu kemungkinan dicatat SETELAH baris riwayat ini
+      // dibuat.
       pickMainPosition(positionScores, {
         roleScores,
         usualPosition: (profile.posisi_biasa as PositionScore['position'] | null) ?? null,

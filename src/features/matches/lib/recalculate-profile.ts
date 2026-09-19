@@ -93,7 +93,7 @@ async function applyProfileRecalculation(
   const roleScores = computeRoleScores(normalized, baseScores);
   const positionScores = computePositionScores(roleScores);
 
-  const rawCandidate = pickMainPosition(positionScores, { roleScores, usualPosition });
+  const rawCandidate = pickMainPosition(positionScores, { roleScores, usualPosition, matches });
 
   // Peredam osilasi (PRD): posisi utama hanya berganti kalau kandidat baru
   // unggul ≥4 poin selama DUA rekalkulasi berturut-turut — rekalkulasi

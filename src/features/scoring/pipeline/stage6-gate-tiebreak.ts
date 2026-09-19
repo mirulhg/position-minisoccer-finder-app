@@ -1,7 +1,8 @@
 import type { AttributeVector, PositionCode, PositionScore, RoleCode, RoleScore } from '../types';
 import { ROLE_GATE_THRESHOLDS } from '../config/gate-thresholds';
 import { ROLE_METADATA, POSITION_RARITY } from '../config/role-metadata';
-import { GATE_GAMMA, FLEXIBILITY_BONUS, TIE_BREAKER_THRESHOLD } from '../config/global-constants';
+import { GATE_GAMMA, FLEXIBILITY_BONUS, OSCILLATION_DAMPING_THRESHOLD, TIE_BREAKER_THRESHOLD } from '../config/global-constants';
+import type { MatchRecord } from './match-stats-conversion';
 
 /**
  * Tahap 6 — Gate: `Gate_r = Π min(1, Ã_j/τ_rj)^γ` untuk setiap prasyarat
@@ -72,6 +73,8 @@ export function computePositionScores(roleScores: RoleScore[]): PositionScore[] 
 export interface TieBreakContext {
   roleScores: RoleScore[];
   usualPosition: PositionCode | null;
+  /** Riwayat pertandingan pemain — dipakai di langkah 2 (kesesuaian dengan posisi yang pernah dimainkan). Opsional: `undefined`/kosong berarti langkah 2 selalu seri dan lanjut ke langkah 3. */
+  matches?: MatchRecord[];
 }
 
 function gateMarginOf(position: PositionScore, ctx: TieBreakContext): number {
@@ -79,12 +82,16 @@ function gateMarginOf(position: PositionScore, ctx: TieBreakContext): number {
   return role?.gate ?? 0;
 }
 
+function matchCountAt(position: PositionCode, ctx: TieBreakContext): number {
+  return (ctx.matches ?? []).filter((match) => match.posisiDimainkan === position).length;
+}
+
 /**
  * Tie-breaker berurutan (PRD Tahap 6) dipakai saat selisih dua posisi
  * teratas < 3,0 poin: (1) gate margin terbesar, (2) kesesuaian dengan
- * posisi yang pernah dimainkan pemain — belum ada data pertandingan di
- * Fase 1, jadi langkah ini selalu seri di sini dan menunggu Fase 3, (3)
- * kelangkaan posisi di populasi, (4) preferensi eksplisit saat onboarding.
+ * posisi yang pernah dimainkan pemain (jumlah pertandingan di `ctx.matches`
+ * pada posisi kandidat masing-masing), (3) kelangkaan posisi di populasi,
+ * (4) preferensi eksplisit saat onboarding.
  */
 export function pickMainPosition(
   positionScores: PositionScore[],
@@ -103,6 +110,13 @@ export function pickMainPosition(
   const byGateMargin = [...candidates].sort((a, b) => gateMarginOf(b, ctx) - gateMarginOf(a, ctx));
   if (gateMarginOf(byGateMargin[0], ctx) !== gateMarginOf(byGateMargin[1], ctx)) {
     return byGateMargin[0];
+  }
+
+  const byMatchCount = [...candidates].sort(
+    (a, b) => matchCountAt(b.position, ctx) - matchCountAt(a.position, ctx),
+  );
+  if (matchCountAt(byMatchCount[0].position, ctx) !== matchCountAt(byMatchCount[1].position, ctx)) {
+    return byMatchCount[0];
   }
 
   const byRarity = [...candidates].sort(
@@ -126,7 +140,7 @@ export function pickMainPosition(
 export function shouldSwitchMainPosition(
   currentMainPosition: PositionCode,
   recentCandidateScores: [PositionScore[], PositionScore[]],
-  threshold = 4.0,
+  threshold = OSCILLATION_DAMPING_THRESHOLD,
 ): boolean {
   return recentCandidateScores.every((scores) => {
     const sorted = [...scores].sort((a, b) => b.score - a.score);
