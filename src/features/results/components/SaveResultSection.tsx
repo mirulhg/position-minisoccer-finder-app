@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { dbGet, markSynced } from '../../../lib/db';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
-import { deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
+import { ACCOUNT_LOGIN_ENABLED, deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
 // Deep import, bukan lewat barrel `../../matches` — lihat komentar di
 // features/matches/index.ts (menghindari menarik MatchInputScreen dan
 // dependensinya ke chunk layar hasil).
@@ -153,6 +153,17 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
       <Card>
         <LoginForm onEmailSent={() => setEmailSent(true)} />
       </Card>
+    );
+  }
+
+  if (!ACCOUNT_LOGIN_ENABLED) {
+    return (
+      <div className="flex flex-col items-center gap-1 text-center">
+        <Button variant="secondary" disabled className="w-full">
+          Simpan hasil ini
+        </Button>
+        <p className="text-xs text-neutral-500">Segera hadir — fitur akun sedang disempurnakan keamanannya.</p>
+      </div>
     );
   }
 
