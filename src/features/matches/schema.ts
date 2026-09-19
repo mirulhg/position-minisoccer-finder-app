@@ -19,6 +19,9 @@ export const matchInputSchema = z.object({
   kehilanganBola: z.number().int().min(0).nullable(),
   pelanggaran: z.number().int().min(0).nullable(),
   cleanSheet: z.boolean().nullable(),
+  // TODO Fase 0 kalibrasi: disimpan (matches.penilaian_diri) tapi belum
+  // dipakai pipeline scoring — PRD sebut "faktor kalibrasi global" tanpa
+  // rumus, lihat MatchRecord di scoring/pipeline/match-stats-conversion.ts.
   penilaianDiri: z.number().int().min(1).max(5).nullable(),
 });
 

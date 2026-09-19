@@ -7,6 +7,15 @@ import type { MatchCountVector, MatchStatsVector } from './stage3-blend';
  * dalam bentuk camelCase — pemetaan dari/ke kolom snake_case Supabase
  * dilakukan di features/matches, bukan di sini (modul ini murni, tanpa tahu
  * soal Supabase).
+ *
+ * TODO Fase 0 kalibrasi: `penilaian_diri` (kolom `matches.penilaian_diri`,
+ * tabel PRD "Statistik pertandingan yang diinput") SENGAJA belum ada di
+ * sini/`FIELD_MAPPINGS` — PRD menyebutnya berpengaruh ke "faktor kalibrasi
+ * global" tanpa pernah mendefinisikan rumusnya di bagian manapun. Field ini
+ * tetap dikumpulkan dan disimpan ke database (lihat matches/schema.ts) agar
+ * datanya tersedia begitu Fase 0 Kalibrasi mendefinisikan rumusnya —
+ * pola yang sama dengan `DEFAULT_COHORT_STATS`. Jangan mengarang formula
+ * baru untuk ini sekarang.
  */
 export interface MatchRecord {
   menitBermain: number;
