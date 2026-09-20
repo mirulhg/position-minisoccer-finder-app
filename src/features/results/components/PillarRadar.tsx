@@ -1,4 +1,5 @@
 import { PILLARS, type Pillar } from '../../scoring';
+import { PILLAR_ICON_PATHS } from '../config/pillar-icons';
 
 interface PillarRadarProps {
   values: Record<Pillar, number>;
@@ -8,6 +9,8 @@ const SIZE = 280;
 const CENTER = SIZE / 2;
 const MAX_RADIUS = CENTER - 48;
 const RING_COUNT = 4;
+const ICON_SIZE = 26;
+const LABEL_ANCHOR_RADIUS = MAX_RADIUS + 20;
 
 // SVG tidak bisa memakai class Tailwind untuk atribut paint; nilai di bawah
 // disalin dari token warna di tailwind.config.ts (primary-500/600, neutral-200).
@@ -56,18 +59,20 @@ export function PillarRadar({ values }: PillarRadarProps) {
       />
 
       {PILLARS.map((pillar, index) => {
-        const [labelX, labelY] = pointFor(index, MAX_RADIUS + 24);
+        const [anchorX, anchorY] = pointFor(index, LABEL_ANCHOR_RADIUS);
         return (
-          <text
+          <image
             key={pillar}
-            x={labelX}
-            y={labelY}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-neutral-600 text-[11px]"
+            href={PILLAR_ICON_PATHS[pillar]}
+            x={anchorX - ICON_SIZE / 2}
+            y={anchorY - ICON_SIZE / 2}
+            width={ICON_SIZE}
+            height={ICON_SIZE}
           >
-            {pillar} ({Math.round(values[pillar])})
-          </text>
+            <title>
+              {pillar} ({Math.round(values[pillar])})
+            </title>
+          </image>
         );
       })}
     </svg>

@@ -18,11 +18,12 @@ import { MainPositionHeader } from './MainPositionHeader';
 import { RoleCard } from './RoleCard';
 import { WhyBlock } from './WhyBlock';
 import { PillarRadar } from './PillarRadar';
+import { PillarBreakdown } from './PillarBreakdown';
 import { AlternativePosition } from './AlternativePosition';
 import { AllRolesList } from './AllRolesList';
 import { SaveResultSection } from './SaveResultSection';
 import { ResultActions } from './ResultActions';
-import { RestartButton } from './RestartButton';
+import { RestartButton } from '../../../components/RestartButton';
 
 interface ResultsScreenProps {
   answers: Record<string, AnswerValue>;
@@ -108,6 +109,10 @@ export function ResultsScreen({
 
       <div className="md:col-span-2 flex justify-center">
         <PillarRadar values={pillarAverages} />
+      </div>
+
+      <div className="md:col-span-2">
+        <PillarBreakdown values={pillarAverages} />
       </div>
 
       {alternativePosition && (
