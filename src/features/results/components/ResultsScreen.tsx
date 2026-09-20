@@ -95,7 +95,7 @@ export function ResultsScreen({
         <PositionChangeBanner />
       </div>
 
-      <div className="md:col-span-2">
+      <div className="md:col-span-2 results-reveal">
         <MainPositionHeader positionScore={result.mainPosition} confidenceLabel={result.confidenceLabel} />
       </div>
 

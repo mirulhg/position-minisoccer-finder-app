@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
 import { dbClear } from '../../../lib/db';
 import { supabase } from '../../../lib/supabase';
 import { signOut, useAuthSession } from '../../auth';
@@ -26,6 +28,7 @@ function todayIsoDate(): string {
  */
 export function AccountScreen({ onBack, onDataDeleted }: AccountScreenProps) {
   const { session, isLoading: isSessionLoading } = useAuthSession();
+  const shouldReduceMotion = useReducedMotion();
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
@@ -127,47 +130,62 @@ export function AccountScreen({ onBack, onDataDeleted }: AccountScreenProps) {
       <Card className="border-danger-200">
         <h2 className="text-base font-semibold text-neutral-900">Hapus semua data</h2>
 
-        {(deleteState === 'idle' || deleteState === 'error') && (
-          <>
-            <p className="mt-1 text-sm text-neutral-600">
-              Menghapus seluruh riwayat profil dan pertandingan yang tersimpan di akunmu secara permanen.
-            </p>
-            <button
-              type="button"
-              onClick={() => setDeleteState('confirming')}
-              className="mt-3 min-h-touch w-full rounded-md border border-danger-300 px-4 text-sm font-medium text-danger-600 hover:bg-danger-50"
+        <AnimatePresence mode="wait" initial={false}>
+          {(deleteState === 'idle' || deleteState === 'error') && (
+            <motion.div
+              key="delete-idle"
+              initial={shouldReduceMotion ? false : DIALOG_HIDDEN}
+              animate={DIALOG_VISIBLE}
+              exit={shouldReduceMotion ? undefined : DIALOG_HIDDEN}
+              transition={DIALOG_TRANSITION}
             >
-              Hapus semua data
-            </button>
-          </>
-        )}
+              <p className="mt-1 text-sm text-neutral-600">
+                Menghapus seluruh riwayat profil dan pertandingan yang tersimpan di akunmu secara permanen.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDeleteState('confirming')}
+                className="mt-3 min-h-touch w-full rounded-md border border-danger-300 px-4 text-sm font-medium text-danger-600 hover:bg-danger-50"
+              >
+                Hapus semua data
+              </button>
+            </motion.div>
+          )}
 
-        {(deleteState === 'confirming' || deleteState === 'deleting') && (
-          <div className="mt-1 flex flex-col gap-3">
-            <p className="text-sm text-neutral-700">
-              Ini akan menghapus SEMUA data tersimpan di akunmu (riwayat profil, semua pertandingan) secara permanen.
-              Akun login kamu tetap ada, tapi kamu harus mulai dari nol lagi.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteState('idle')}
-                disabled={deleteState === 'deleting'}
-                className="min-h-touch min-w-touch flex-1 rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={deleteState === 'deleting'}
-                className="min-h-touch min-w-touch flex-1 rounded-md bg-danger-600 px-4 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
-              >
-                {deleteState === 'deleting' ? 'Menghapus…' : 'Ya, hapus semua data'}
-              </button>
-            </div>
-          </div>
-        )}
+          {(deleteState === 'confirming' || deleteState === 'deleting') && (
+            <motion.div
+              key="delete-confirming"
+              className="mt-1 flex flex-col gap-3"
+              initial={shouldReduceMotion ? false : DIALOG_HIDDEN}
+              animate={DIALOG_VISIBLE}
+              exit={shouldReduceMotion ? undefined : DIALOG_HIDDEN}
+              transition={DIALOG_TRANSITION}
+            >
+              <p className="text-sm text-neutral-700">
+                Ini akan menghapus SEMUA data tersimpan di akunmu (riwayat profil, semua pertandingan) secara permanen.
+                Akun login kamu tetap ada, tapi kamu harus mulai dari nol lagi.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteState('idle')}
+                  disabled={deleteState === 'deleting'}
+                  className="min-h-touch min-w-touch flex-1 rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteState === 'deleting'}
+                  className="min-h-touch min-w-touch flex-1 rounded-md bg-danger-600 px-4 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                >
+                  {deleteState === 'deleting' ? 'Menghapus…' : 'Ya, hapus semua data'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {deleteError && (
           <p role="alert" className="mt-2 text-sm text-danger-600">

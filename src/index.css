@@ -1,9 +1,26 @@
 @import 'tailwindcss';
 @config '../tailwind.config.ts';
 
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* strong ease-out untuk entrance UI */
+}
+
 @layer base {
   html {
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* Tanpa ini, iOS/Android membuat highlight abu-abu/biru tiap elemen
+       ditekan — sinyal paling kentara bahwa ini "cuma website". Setiap
+       elemen tap tetap dapat feedback lewat :active masing-masing. */
+    -webkit-tap-highlight-color: transparent;
+    /* Mencegah teks membesar sendiri saat device diputar ke landscape. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html,
+  body {
+    /* App ini bukan dokumen yang di-scroll bebas — pull-to-refresh/rubber
+       band di ujung layar cuma mengganggu alur onboarding/kuesioner. */
+    overscroll-behavior: none;
   }
 
   body {
@@ -12,6 +29,33 @@
 
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary-600;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    /* Hilangkan delay 300ms sebelum `click` fire di elemen yang memang
+       tidak pernah di-double-tap-zoom. */
+    touch-action: manipulation;
+    /* Tekan-tahan pada tombol tidak boleh memicu seleksi teks label. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+@layer components {
+  .results-reveal {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 400ms var(--ease-out),
+      transform 400ms var(--ease-out);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
   }
 }
 

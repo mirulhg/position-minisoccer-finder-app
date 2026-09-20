@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
 import { dbGet, markSynced } from '../../../lib/db';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 import { ACCOUNT_LOGIN_ENABLED, deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
@@ -28,6 +30,7 @@ type MigrationState = 'idle' | 'migrating' | 'done' | 'error';
  */
 export function SaveResultSection({ profile, scoringResult, onViewHistory }: SaveResultSectionProps) {
   const { session, isLoading: isSessionLoading } = useAuthSession();
+  const shouldReduceMotion = useReducedMotion();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [migrationState, setMigrationState] = useState<MigrationState>('idle');
@@ -102,12 +105,18 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     };
   }, [session, profile, scoringResult]);
 
-  if (!isSupabaseConfigured) return null;
+  // Setiap cabang di bawah menghasilkan konten yang sama persis dengan
+  // sebelumnya (logic keputusan tidak berubah) — cuma dikumpulkan ke satu
+  // variabel, bukan early return, supaya bisa dibungkus AnimatePresence di
+  // akhir dan transisi masuk/keluar antar-state ikut teranimasi.
+  let content: ReactNode = null;
+  let contentKey: string | null = null;
 
-  if (isSessionLoading) return null;
-
-  if (migrationState === 'done') {
-    return (
+  if (!isSupabaseConfigured || isSessionLoading) {
+    content = null;
+  } else if (migrationState === 'done') {
+    contentKey = 'migration-done';
+    content = (
       <Card>
         <p className="text-sm font-medium text-primary-700">Tersimpan ke akunmu</p>
         <p className="mt-1 text-sm text-neutral-600">
@@ -118,46 +127,41 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
         </Button>
       </Card>
     );
-  }
-
-  if (migrationState === 'migrating') {
-    return (
+  } else if (migrationState === 'migrating') {
+    contentKey = 'migration-progress';
+    content = (
       <Card>
         <p className="text-sm text-neutral-600">Menyimpan hasil ke akunmu…</p>
       </Card>
     );
-  }
-
-  if (migrationState === 'error') {
-    return (
+  } else if (migrationState === 'error') {
+    contentKey = 'migration-error';
+    content = (
       <Card>
         <p role="alert" className="text-sm text-danger-600">
           {migrationError}
         </p>
       </Card>
     );
-  }
-
-  if (session) return null;
-
-  if (emailSent) {
-    return (
+  } else if (session) {
+    content = null;
+  } else if (emailSent) {
+    contentKey = 'email-sent';
+    content = (
       <Card>
         <p className="text-sm text-neutral-700">Cek email kamu — tautan masuk sudah dikirim.</p>
       </Card>
     );
-  }
-
-  if (showLoginForm) {
-    return (
+  } else if (showLoginForm) {
+    contentKey = 'login-form';
+    content = (
       <Card>
         <LoginForm onEmailSent={() => setEmailSent(true)} />
       </Card>
     );
-  }
-
-  if (!ACCOUNT_LOGIN_ENABLED) {
-    return (
+  } else if (!ACCOUNT_LOGIN_ENABLED) {
+    contentKey = 'login-disabled';
+    content = (
       <div className="flex flex-col items-center gap-1 text-center">
         <Button variant="secondary" disabled className="w-full">
           Simpan hasil ini
@@ -165,11 +169,28 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
         <p className="text-xs text-neutral-500">Segera hadir — fitur akun sedang disempurnakan keamanannya.</p>
       </div>
     );
+  } else {
+    contentKey = 'login-cta';
+    content = (
+      <Button variant="secondary" onClick={() => setShowLoginForm(true)} className="w-full">
+        Simpan hasil ini
+      </Button>
+    );
   }
 
   return (
-    <Button variant="secondary" onClick={() => setShowLoginForm(true)} className="w-full">
-      Simpan hasil ini
-    </Button>
+    <AnimatePresence mode="wait" initial={false}>
+      {content && (
+        <motion.div
+          key={contentKey}
+          initial={shouldReduceMotion ? false : DIALOG_HIDDEN}
+          animate={DIALOG_VISIBLE}
+          exit={shouldReduceMotion ? undefined : DIALOG_HIDDEN}
+          transition={DIALOG_TRANSITION}
+        >
+          {content}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
