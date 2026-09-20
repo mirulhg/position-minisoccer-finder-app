@@ -44,9 +44,10 @@ export function useQuestionnaireSession(willingGoalkeeper: boolean) {
 
   async function submitPage(pageQuestionIds: string[], values: Record<string, AnswerValue>): Promise<void> {
     const answeredAt = new Date().toISOString();
-    await Promise.all(
-      pageQuestionIds.map((id) => dbPut('answers', id, { questionId: id, value: values[id], answeredAt })),
-    );
+    await Promise.all([
+      ...pageQuestionIds.map((id) => dbPut('answers', id, { questionId: id, value: values[id], answeredAt })),
+      dbPut('meta', 'lastActivityAt', Date.now()),
+    ]);
     setAnswers((prev) => ({ ...prev, ...values }));
     setCurrentIndex((prev) => prev + pageQuestionIds.length);
   }

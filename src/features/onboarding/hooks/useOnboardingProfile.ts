@@ -27,7 +27,7 @@ export function useOnboardingProfile() {
   async function saveProfile(partial: Partial<OnboardingProfile>): Promise<void> {
     const merged = { ...profile, ...partial };
     setProfile(merged);
-    await dbPut(STORE, KEY, merged);
+    await Promise.all([dbPut(STORE, KEY, merged), dbPut('meta', 'lastActivityAt', Date.now())]);
   }
 
   return { profile, isLoading, saveProfile };

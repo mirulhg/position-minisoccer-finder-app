@@ -2,12 +2,14 @@ import { openDB, type IDBPDatabase } from 'idb';
 
 const DB_NAME = 'msf-db';
 // v3 menambahkan store 'matchQueue' (Fase 3, antrean input pertandingan
-// offline) — dinaikkan lagi supaya pengguna lama ikut memicu `upgrade`.
-const DB_VERSION = 3;
+// offline). v4 menambahkan store 'meta' (menyimpan `lastActivityAt` untuk
+// auto-reset progres yang ditinggal >30 hari) — dinaikkan lagi supaya
+// pengguna lama ikut memicu `upgrade`.
+const DB_VERSION = 4;
 
-export type StoreName = 'onboardingProfile' | 'answers' | 'analyticsQueue' | 'matchQueue';
+export type StoreName = 'onboardingProfile' | 'answers' | 'analyticsQueue' | 'matchQueue' | 'meta';
 
-const STORE_NAMES: StoreName[] = ['onboardingProfile', 'answers', 'analyticsQueue', 'matchQueue'];
+const STORE_NAMES: StoreName[] = ['onboardingProfile', 'answers', 'analyticsQueue', 'matchQueue', 'meta'];
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 

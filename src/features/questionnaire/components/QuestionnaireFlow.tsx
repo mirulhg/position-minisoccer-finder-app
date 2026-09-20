@@ -10,6 +10,7 @@ import type { AnswerValue, Question, QuestionBlock } from '../types';
 interface QuestionnaireFlowProps {
   willingGoalkeeper: boolean;
   onComplete: (answers: Record<string, AnswerValue>) => void;
+  onRestart: () => void;
 }
 
 function buildPage(questions: Question[], startIndex: number, pageSize: number): Question[] {
@@ -23,7 +24,7 @@ function buildPage(questions: Question[], startIndex: number, pageSize: number):
   return page;
 }
 
-export function QuestionnaireFlow({ willingGoalkeeper, onComplete }: QuestionnaireFlowProps) {
+export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: QuestionnaireFlowProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { isLoading, questions, answers, currentIndex, isComplete, submitPage, goBackPage } =
     useQuestionnaireSession(willingGoalkeeper);
@@ -92,6 +93,7 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete }: Questionnai
         initialAnswers={answers}
         onSubmit={handleSubmitPage}
         onBack={currentIndex > 0 ? handleBack : null}
+        onRestart={onRestart}
       />
     </div>
   );

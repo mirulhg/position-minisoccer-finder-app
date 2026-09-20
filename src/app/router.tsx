@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { dbGet } from '../lib/db';
+import { dbClear, dbGet } from '../lib/db';
+import { isProgressStale } from './lib/stale-progress';
 import type { OnboardingProfile } from '../features/onboarding';
 import type { AnswerValue } from '../features/questionnaire';
 
@@ -37,16 +38,27 @@ export function AppRouter() {
     // statis) supaya modul fitur onboarding — termasuk `OnboardingFlow` yang
     // di-lazy() di atas — tidak ikut tertarik ke chunk awal (lihat peringatan
     // Rollup "ineffective dynamic import" kalau dua cara impor dicampur).
-    Promise.all([dbGet<unknown>('onboardingProfile', 'profile'), import('../features/onboarding')]).then(
-      ([stored, { onboardingProfileSchema }]) => {
+    // Sebelum itu, jaring pengaman: kalau progres terakhir sudah ditinggal
+    // >30 hari (STALE_PROGRESS_MS), bersihkan IndexedDB lebih dulu supaya
+    // bootstrap di atas membaca `onboardingProfile` yang sudah kosong dan
+    // otomatis mulai dari onboarding — tidak ada UI yang perlu dirender atau
+    // dikonfirmasi di sini.
+    dbGet<number>('meta', 'lastActivityAt')
+      .then((lastActivityAt) => {
+        if (!isProgressStale(lastActivityAt, Date.now())) return Promise.resolve();
+        return Promise.all([dbClear('onboardingProfile'), dbClear('answers'), dbClear('meta')]).then(() => {});
+      })
+      .then(() =>
+        Promise.all([dbGet<unknown>('onboardingProfile', 'profile'), import('../features/onboarding')]),
+      )
+      .then(([stored, { onboardingProfileSchema }]) => {
         const parsed = onboardingProfileSchema.safeParse(stored);
         if (parsed.success) {
           setProfile(parsed.data);
           setScreen('questionnaire');
         }
         setIsBootstrapping(false);
-      },
-    );
+      });
   }, []);
 
   function handleOnboardingComplete(completedProfile: OnboardingProfile) {
@@ -85,7 +97,11 @@ export function AppRouter() {
       {screen === 'onboarding' && <OnboardingFlow onComplete={handleOnboardingComplete} />}
 
       {screen === 'questionnaire' && profile && (
-        <QuestionnaireFlow willingGoalkeeper={profile.willingGoalkeeper} onComplete={handleQuestionnaireComplete} />
+        <QuestionnaireFlow
+          willingGoalkeeper={profile.willingGoalkeeper}
+          onComplete={handleQuestionnaireComplete}
+          onRestart={handleRestart}
+        />
       )}
 
       {screen === 'results' && profile && answers && (

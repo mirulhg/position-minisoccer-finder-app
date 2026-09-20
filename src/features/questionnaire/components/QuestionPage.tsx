@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
+import { RestartButton } from '../../../components/RestartButton';
 import { QuestionCard } from './QuestionCard';
 import type { AnswerValue, Question } from '../types';
 
@@ -8,9 +9,10 @@ interface QuestionPageProps {
   initialAnswers: Record<string, AnswerValue>;
   onSubmit: (values: Record<string, AnswerValue>) => void;
   onBack: (() => void) | null;
+  onRestart: () => void;
 }
 
-export function QuestionPage({ questions, initialAnswers, onSubmit, onBack }: QuestionPageProps) {
+export function QuestionPage({ questions, initialAnswers, onSubmit, onBack, onRestart }: QuestionPageProps) {
   const [draft, setDraft] = useState<Record<string, AnswerValue>>(() => {
     const seeded: Record<string, AnswerValue> = {};
     for (const question of questions) {
@@ -36,15 +38,18 @@ export function QuestionPage({ questions, initialAnswers, onSubmit, onBack }: Qu
         />
       ))}
 
-      <div className="mt-auto flex gap-3 pt-6">
-        {onBack && (
-          <Button variant="secondary" onClick={onBack} className="flex-1">
-            Kembali
+      <div className="mt-auto flex flex-col gap-4 pt-6">
+        <div className="flex gap-3">
+          {onBack && (
+            <Button variant="secondary" onClick={onBack} className="flex-1">
+              Kembali
+            </Button>
+          )}
+          <Button onClick={() => onSubmit(draft)} disabled={!canSubmit} className="flex-1">
+            Lanjut
           </Button>
-        )}
-        <Button onClick={() => onSubmit(draft)} disabled={!canSubmit} className="flex-1">
-          Lanjut
-        </Button>
+        </div>
+        <RestartButton onRestart={onRestart} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '../../../components/ui/Button';
-import { dbClear } from '../../../lib/db';
+import { Button } from './ui/Button';
+import { dbClear } from '../lib/db';
 
 interface RestartButtonProps {
   onRestart: () => void;
@@ -19,7 +19,7 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
 
   async function handleConfirm() {
     setIsClearing(true);
-    await Promise.all([dbClear('onboardingProfile'), dbClear('answers')]);
+    await Promise.all([dbClear('onboardingProfile'), dbClear('answers'), dbClear('meta')]);
     onRestart();
   }
 
