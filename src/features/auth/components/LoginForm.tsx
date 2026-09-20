@@ -66,6 +66,9 @@ export function LoginForm({ onEmailSent }: LoginFormProps) {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="nama@email.com"
+          autoCapitalize="none"
+          autoCorrect="off"
+          enterKeyHint="send"
         />
         <Button type="submit" variant="secondary" disabled={isSendingLink} className="w-full">
           {isSendingLink ? 'Mengirim tautan…' : 'Kirim tautan masuk'}
