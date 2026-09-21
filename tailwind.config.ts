@@ -64,6 +64,10 @@ export default {
       },
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        /** Kredit developer di AppFooter — lihat link Google Fonts di index.html. */
+        script: ['Alex Brush', 'cursive'],
+        /** Info versi app di AppFooter — lihat link Google Fonts di index.html. */
+        mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
         xs: '4px',
