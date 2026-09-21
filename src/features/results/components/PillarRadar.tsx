@@ -14,10 +14,12 @@ const ICON_SIZE = 26;
 const LABEL_ANCHOR_RADIUS = MAX_RADIUS + 20;
 
 // SVG tidak bisa memakai class Tailwind untuk atribut paint; nilai di bawah
-// disalin dari token warna di tailwind.config.ts (primary-500/600, neutral-200).
+// disalin dari token warna di tailwind.config.ts (neutral-200, brand-green —
+// dipakai sebagai fill/tint+stroke dekoratif, BUKAN warna teks, sesuai
+// batasan brand-green di tailwind.config.ts).
 const GRID_COLOR = '#e2e1de';
-const FILL_COLOR = '#3a9142';
-const STROKE_COLOR = '#2c7433';
+const FILL_COLOR = '#00FF85';
+const STROKE_COLOR = '#00FF85';
 
 function pointFor(index: number, radius: number): [number, number] {
   const angle = -Math.PI / 2 + (index * 2 * Math.PI) / PILLARS.length;

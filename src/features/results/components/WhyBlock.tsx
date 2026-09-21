@@ -49,7 +49,7 @@ export function WhyBlock({ attributes }: WhyBlockProps) {
           >
             <div className="mt-3 flex flex-col gap-3">
               <div>
-                <p className="text-sm font-medium text-primary-700">Kekuatan utama</p>
+                <p className="text-sm font-medium text-brand-ink">Kekuatan utama</p>
                 <ul className="mt-1 flex flex-col gap-1">
                   {strongest.map(([attribute, value]) => (
                     <li key={attribute} className="flex justify-between text-sm text-neutral-700">

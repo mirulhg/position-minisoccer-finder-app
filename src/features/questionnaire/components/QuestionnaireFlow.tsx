@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { trackEvent } from '../../../lib/analytics';
@@ -12,6 +13,11 @@ interface QuestionnaireFlowProps {
   onComplete: (answers: Record<string, AnswerValue>) => void;
   onRestart: () => void;
 }
+
+const PAGE_TRANSITION: Transition = { duration: 0.22, ease: 'easeOut' };
+const PAGE_HIDDEN_ENTER = { opacity: 0, x: 16 };
+const PAGE_HIDDEN_EXIT = { opacity: 0, x: -16 };
+const PAGE_VISIBLE = { opacity: 1, x: 0 };
 
 function buildPage(questions: Question[], startIndex: number, pageSize: number): Question[] {
   if (startIndex >= questions.length) return [];
@@ -29,6 +35,7 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: 
   const { isLoading, questions, answers, currentIndex, isComplete, submitPage, goBackPage } =
     useQuestionnaireSession(willingGoalkeeper);
   const [transitionDismissedAt, setTransitionDismissedAt] = useState(-1);
+  const shouldReduceMotion = useReducedMotion();
 
   const pageSize = isDesktop ? 3 : 1;
   const page = buildPage(questions, currentIndex, pageSize);
@@ -70,10 +77,6 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: 
     return null;
   }
 
-  if (showTransition) {
-    return <BlockTransition block={page[0].block} onContinue={() => setTransitionDismissedAt(currentIndex)} />;
-  }
-
   function handleSubmitPage(values: Record<string, AnswerValue>) {
     submitPage(page.map((q) => q.id), values);
   }
@@ -83,18 +86,42 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: 
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <div className="px-4 pt-4">
-        <ProgressBar percent={(currentIndex / questions.length) * 100} label="Progres kuesioner" />
-      </div>
-      <QuestionPage
-        key={pageKey}
-        questions={page}
-        initialAnswers={answers}
-        onSubmit={handleSubmitPage}
-        onBack={currentIndex > 0 ? handleBack : null}
-        onRestart={onRestart}
-      />
-    </div>
+    // AnimatePresence terluar ini murni untuk transisi keluar-masuk
+    // BlockTransition <-> layar pertanyaan (exit fade+scale saat "Lanjut"
+    // BlockTransition diklik) — terpisah dari AnimatePresence di dalam
+    // untuk transisi antar-halaman pertanyaan, supaya keduanya tidak saling
+    // ganggu kunci/exit masing-masing.
+    <AnimatePresence mode="wait">
+      {showTransition ? (
+        <BlockTransition
+          key="block-transition"
+          block={page[0].block}
+          onContinue={() => setTransitionDismissedAt(currentIndex)}
+        />
+      ) : (
+        <div key="question-page" className="flex min-h-dvh flex-col">
+          <div className="px-4 pt-4">
+            <ProgressBar percent={(currentIndex / questions.length) * 100} label="Progres kuesioner" />
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pageKey}
+              initial={shouldReduceMotion ? false : PAGE_HIDDEN_ENTER}
+              animate={PAGE_VISIBLE}
+              exit={shouldReduceMotion ? undefined : PAGE_HIDDEN_EXIT}
+              transition={PAGE_TRANSITION}
+            >
+              <QuestionPage
+                questions={page}
+                initialAnswers={answers}
+                onSubmit={handleSubmitPage}
+                onBack={currentIndex > 0 ? handleBack : null}
+                onRestart={onRestart}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

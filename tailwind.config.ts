@@ -9,6 +9,29 @@ export default {
   theme: {
     extend: {
       colors: {
+        /**
+         * Warna brand baru (rebrand, lihat prompt-fix-audit-temuan-19sept.md
+         * di project Cowork) — peran semantik SUDAH ditentukan, jangan
+         * dipakai bertukar peran:
+         * - brand-ink: teks/heading/bg tombol utama (kontras 17:1 di atas putih).
+         * - brand-primary: aksen interaktif/CTA/selected/hover (4.6:1 — aman
+         *   untuk teks besar+tebal saja, JANGAN untuk teks kecil/tipis).
+         * - brand-cyan: HANYA dekoratif (outline/focus ring/glow) — kontras
+         *   ±1.35:1, JANGAN PERNAH jadi warna teks di atas bg terang.
+         * - brand-green: skor/indikator positif sebagai fill/tint (teks
+         *   brand-ink di atasnya) atau dekoratif di panel gelap — kontras
+         *   sama rendahnya dengan cyan, JANGAN PERNAH jadi warna teks di
+         *   atas bg terang.
+         * Token `primary`/`neutral`/`danger` di bawah TIDAK diganti nilainya
+         * — masih dipakai di banyak tempat yang belum direview untuk migrasi
+         * ini (lihat laporan pengerjaan).
+         */
+        brand: {
+          ink: '#38003C',
+          primary: '#E90052',
+          cyan: '#04F5FF',
+          green: '#00FF85',
+        },
         primary: {
           50: '#f0f9f0',
           100: '#dcf0dd',

@@ -24,7 +24,7 @@ export function RoleCard({ roleScore }: RoleCardProps) {
     <Card>
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-base font-semibold text-neutral-900">{metadata.name}</h3>
-        <span className="text-lg font-semibold text-primary-700">
+        <span className="text-lg font-semibold text-brand-primary">
           <AnimatedScore value={fit} />
           <span className="sr-only">{fit}</span>
         </span>

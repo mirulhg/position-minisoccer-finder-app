@@ -31,7 +31,7 @@ export function Slider({ id, label, value, min, max, step = 1, unit, onChange, e
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-describedby={errorId}
-        className="h-11 w-full cursor-pointer accent-primary-600"
+        className="h-11 w-full cursor-pointer accent-brand-primary"
       />
     </div>
   );
