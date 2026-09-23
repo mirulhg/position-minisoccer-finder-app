@@ -42,11 +42,30 @@ export function AppRouter() {
     // >30 hari (STALE_PROGRESS_MS), bersihkan IndexedDB lebih dulu supaya
     // bootstrap di atas membaca `onboardingProfile` yang sudah kosong dan
     // otomatis mulai dari onboarding — tidak ada UI yang perlu dirender atau
-    // dikonfirmasi di sini.
+    // dikonfirmasi di sini. Sesi Supabase yang tertinggal juga ikut
+    // dibersihkan (temuan pentest — sama seperti RestartButton, jaring
+    // pengaman 30 hari ini juga titik dimana pemain berikutnya di perangkat
+    // yang sama bisa mulai dari nol; kalau sesi lama tidak dibersihkan,
+    // hasil kuesioner pemain baru itu bisa ter-upload diam-diam ke akun
+    // lama). `import('../lib/supabase')` dinamis, bukan statis di atas —
+    // supaya @supabase/supabase-js tidak ikut ke bundle awal buat pengunjung
+    // yang progresnya tidak basi sama sekali (lihat komentar lazy() di atas).
     dbGet<number>('meta', 'lastActivityAt')
       .then((lastActivityAt) => {
         if (!isProgressStale(lastActivityAt, Date.now())) return Promise.resolve();
-        return Promise.all([dbClear('onboardingProfile'), dbClear('answers'), dbClear('meta')]).then(() => {});
+        return Promise.all([
+          dbClear('onboardingProfile'),
+          dbClear('answers'),
+          dbClear('meta'),
+          import('../lib/supabase').then(({ supabase }) => {
+            if (!supabase) return;
+            return import('../features/auth').then(({ signOut }) =>
+              signOut(supabase).catch((error) => {
+                console.warn('Gagal keluar dari sesi Supabase saat auto-reset progres basi:', error);
+              }),
+            );
+          }),
+        ]).then(() => {});
       })
       .then(() =>
         Promise.all([dbGet<unknown>('onboardingProfile', 'profile'), import('../features/onboarding')]),

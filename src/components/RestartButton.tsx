@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from './ui/Button';
+import { signOut } from '../features/auth';
 import { dbClear } from '../lib/db';
+import { supabase } from '../lib/supabase';
 import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from './ui/dialog-motion';
 
 interface RestartButtonProps {
@@ -10,10 +12,14 @@ interface RestartButtonProps {
 
 /**
  * Aksi destruktif — sengaja tidak menonjol (bukan CTA utama) dan butuh
- * konfirmasi inline sebelum jalan (Nielsen "Error prevention"). Hanya
- * menghapus IndexedDB lokal lewat `dbClear`; tidak memanggil Supabase sama
- * sekali, jadi hasil yang sudah disimpan ke akun (lewat "Simpan hasil ini")
- * tetap aman.
+ * konfirmasi inline sebelum jalan (Nielsen "Error prevention"). Menghapus
+ * IndexedDB lokal lewat `dbClear` — hasil yang sudah disimpan ke akun
+ * (lewat "Simpan hasil ini") tetap aman di Supabase, cuma jejak lokalnya
+ * yang hilang. Juga memanggil `signOut()` (temuan pentest: sesi Supabase
+ * yang tertinggal aktif di perangkat bersama bisa membuat pemain BERIKUTNYA
+ * — yang mengisi kuesioner dari awal tanpa login — hasilnya ter-upload
+ * diam-diam ke akun pemain sebelumnya kalau sesi lama itu tidak ikut
+ * dibersihkan di sini).
  */
 export function RestartButton({ onRestart }: RestartButtonProps) {
   const [isConfirming, setIsConfirming] = useState(false);
@@ -23,6 +29,14 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
   async function handleConfirm() {
     setIsClearing(true);
     await Promise.all([dbClear('onboardingProfile'), dbClear('answers'), dbClear('meta')]);
+    if (supabase) {
+      // Kegagalan signOut() (mis. offline) TIDAK boleh menghalangi restart —
+      // pembersihan lokal di atas sudah cukup untuk mengembalikan app ke
+      // keadaan awal; sesi Supabase yang gagal dibersihkan cuma dicatat.
+      await signOut(supabase).catch((error) => {
+        console.warn('Gagal keluar dari sesi Supabase saat mulai ulang:', error);
+      });
+    }
     onRestart();
   }
 
