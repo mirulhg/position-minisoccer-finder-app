@@ -5,7 +5,7 @@ import { PositionChangeBanner } from '../../history';
 import type { AnswerValue } from '../../questionnaire';
 import {
   ATTRIBUTE_LABELS,
-  POSITION_NAMES,
+  POSITION_ENGLISH_NAMES,
   ROLE_METADATA,
   computePillarAverages,
   computeScoringResult,
@@ -82,9 +82,14 @@ export function ResultsScreen({
 
     return {
       displayName: session ? deriveDisplayName(session.user) : 'Pemain Minisoccer',
-      positionName: POSITION_NAMES[result.mainPosition.position],
+      positionName: POSITION_ENGLISH_NAMES[result.mainPosition.position],
       positionScore: result.mainPosition.score,
-      roles: topRolesInMainPosition.map((score) => ({ name: ROLE_METADATA[score.role].name, fit: score.fit })),
+      position: result.mainPosition.position,
+      roles: topRolesInMainPosition.map((score) => ({
+        name: ROLE_METADATA[score.role].name,
+        fit: score.fit,
+        role: score.role,
+      })),
       topAttributes,
     };
   }, [result, session, topRolesInMainPosition]);

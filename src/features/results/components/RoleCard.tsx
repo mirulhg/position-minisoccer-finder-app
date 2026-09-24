@@ -7,6 +7,8 @@ import {
   COLLAPSIBLE_TRANSITION,
   COLLAPSIBLE_VISIBLE,
 } from '../../../components/ui/collapsible-motion';
+import { PositionBadge } from '../../../components/ui/PositionBadge';
+import { RoleBadge } from '../../../components/ui/RoleBadge';
 import { ROLE_METADATA, type RoleScore } from '../../scoring';
 import { AnimatedScore } from './AnimatedScore';
 
@@ -24,12 +26,16 @@ export function RoleCard({ roleScore }: RoleCardProps) {
     <Card>
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-base font-semibold text-neutral-900">{metadata.name}</h3>
-        <span className="text-lg font-semibold text-brand-primary">
+        <span className="text-lg font-semibold text-neutral-900">
           <AnimatedScore value={fit} />
           <span className="sr-only">{fit}</span>
         </span>
       </div>
-      <p className="mt-1 text-sm text-neutral-600">{metadata.description}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <PositionBadge position={metadata.position} />
+        <RoleBadge role={roleScore.role} />
+      </div>
+      <p className="mt-2 text-sm text-neutral-600">{metadata.description}</p>
 
       <button
         type="button"

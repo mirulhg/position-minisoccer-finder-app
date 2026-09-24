@@ -24,20 +24,16 @@ export interface PositionAreaColor {
 }
 
 /**
- * Warna badge/aksen per area posisi (rebrand, lihat
- * prompt-fix-audit-temuan-19sept.md di project Cowork) — BELUM dipakai di
- * UI manapun saat file ini ditambahkan: tidak ada badge/tag kelompok posisi
- * yang sudah ada di kode (RoleCard/AllRolesList/MainPositionHeader/
- * AlternativePosition/PitchTap semuanya menampilkan nama posisi sebagai
- * teks polos, tanpa badge berwarna per area) — lihat laporan pengerjaan.
- * Disiapkan supaya siap dipakai begitu ada keputusan UI terpisah untuk
- * menampilkannya, tanpa perlu redefinisi warna nanti. Teks gelap di sini
- * ('#38003C') adalah brand-ink — dipasangkan ke Gelandang/Kiper karena
- * teks putih gagal kontras di kedua warna itu; JANGAN ditukar pasangannya.
+ * Warna badge per area posisi — dipakai `PositionBadge`/`RoleBadge`
+ * (src/components/ui/). Pasangan teks dicek manual terhadap WCAG AA teks
+ * normal (≥4.5:1): putih untuk Penyerang (5.1:1), Gelandang (5.3:1), dan
+ * Bek (5.9:1) — brand-ink di ketiganya gagal (±2.9–3.3:1). Kiper satu-
+ * satunya yang wajib teks gelap ('#38003C' = brand-ink, 7.7:1) karena putih
+ * gagal total di sana (2.2:1). JANGAN ditukar pasangannya.
  */
 export const POSITION_AREA_COLORS: Record<PositionArea, PositionAreaColor> = {
-  Penyerang: { bg: '#E63946', text: '#FFFFFF' },
-  Gelandang: { bg: '#F4A261', text: '#38003C' },
-  Bek: { bg: '#1D3557', text: '#FFFFFF' },
-  Kiper: { bg: '#2EC4B6', text: '#38003C' },
+  Penyerang: { bg: '#DC052D', text: '#FFFFFF' },
+  Gelandang: { bg: '#047C4C', text: '#FFFFFF' },
+  Bek: { bg: '#0066B2', text: '#FFFFFF' },
+  Kiper: { bg: '#E6A100', text: '#38003C' },
 };

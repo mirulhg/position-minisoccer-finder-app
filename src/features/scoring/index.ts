@@ -13,7 +13,8 @@ export type {
 } from './types';
 
 export { ATTRIBUTE_LABELS, ATTRIBUTE_PILLARS, PILLARS, FIELD_ATTRIBUTE_CODES, GOALKEEPER_ATTRIBUTE_CODES } from './config/attributes';
-export { ROLE_METADATA, POSITION_NAMES, ALL_ROLE_CODES } from './config/role-metadata';
+export { ROLE_METADATA, POSITION_NAMES, POSITION_ENGLISH_NAMES, ALL_ROLE_CODES } from './config/role-metadata';
+export { POSITION_AREA, POSITION_AREA_COLORS, type PositionArea, type PositionAreaColor } from './config/position-area-colors';
 
 export { convertLikert, convertFrequency, convertTradeOff, type TradeOffChoice } from './pipeline/stage1-item-score';
 export type { ItemContribution } from './pipeline/stage2-aggregate';

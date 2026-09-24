@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { BallSpinner } from '../../../components/ui/BallSpinner';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
@@ -110,6 +111,7 @@ export function AccountScreen({ onBack, onDataDeleted }: AccountScreenProps) {
           Berkas JSON berisi seluruh riwayat profil, skor role, dan pertandingan yang tersimpan di akunmu.
         </p>
         <Button variant="secondary" onClick={handleExport} disabled={isExporting} className="mt-3 w-full">
+          {isExporting && <BallSpinner />}
           {isExporting ? 'Menyiapkan berkas…' : 'Unduh data saya'}
         </Button>
         {exportError && (
@@ -178,8 +180,9 @@ export function AccountScreen({ onBack, onDataDeleted }: AccountScreenProps) {
                   type="button"
                   onClick={handleConfirmDelete}
                   disabled={deleteState === 'deleting'}
-                  className="min-h-touch min-w-touch flex-1 rounded-md bg-danger-600 px-4 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                  className="inline-flex min-h-touch min-w-touch flex-1 items-center justify-center gap-2 rounded-md bg-danger-600 px-4 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
                 >
+                  {deleteState === 'deleting' && <BallSpinner />}
                   {deleteState === 'deleting' ? 'Menghapus…' : 'Ya, hapus semua data'}
                 </button>
               </div>

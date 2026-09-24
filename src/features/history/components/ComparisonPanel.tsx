@@ -1,5 +1,7 @@
 import { Card } from '../../../components/ui/Card';
-import { PILLARS, POSITION_NAMES, ROLE_METADATA, computePillarAverages, type PositionCode, type RoleCode } from '../../scoring';
+import { PositionBadge } from '../../../components/ui/PositionBadge';
+import { RoleBadge } from '../../../components/ui/RoleBadge';
+import { PILLARS, computePillarAverages, type PositionCode, type RoleCode } from '../../scoring';
 import type { ComparisonProfile } from '../lib/fetch-profiles-for-comparison';
 
 interface ComparisonPanelProps {
@@ -34,16 +36,20 @@ export function ComparisonPanel({ profiles }: ComparisonPanelProps) {
         <div>
           <p className="text-xs text-neutral-400">{formatDate(older.createdAt)}</p>
           <p className="mt-1 font-semibold text-neutral-900">
-            {older.mainPosition ? POSITION_NAMES[older.mainPosition as PositionCode] : '-'}
+            {older.mainPosition ? <PositionBadge position={older.mainPosition as PositionCode} /> : '-'}
           </p>
-          <p className="text-neutral-600">{older.mainRole ? ROLE_METADATA[older.mainRole as RoleCode].name : '-'}</p>
+          <p className="mt-1 text-neutral-600">
+            {older.mainRole ? <RoleBadge role={older.mainRole as RoleCode} /> : '-'}
+          </p>
         </div>
         <div>
           <p className="text-xs text-neutral-400">{formatDate(newer.createdAt)}</p>
           <p className="mt-1 font-semibold text-neutral-900">
-            {newer.mainPosition ? POSITION_NAMES[newer.mainPosition as PositionCode] : '-'}
+            {newer.mainPosition ? <PositionBadge position={newer.mainPosition as PositionCode} /> : '-'}
           </p>
-          <p className="text-neutral-600">{newer.mainRole ? ROLE_METADATA[newer.mainRole as RoleCode].name : '-'}</p>
+          <p className="mt-1 text-neutral-600">
+            {newer.mainRole ? <RoleBadge role={newer.mainRole as RoleCode} /> : '-'}
+          </p>
         </div>
       </div>
 

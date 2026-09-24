@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { PositionBadge } from '../../../components/ui/PositionBadge';
 import { supabase } from '../../../lib/supabase';
 import { useAuthSession } from '../../auth';
 import { POSITION_NAMES } from '../../scoring';
 import { fetchProfileHistory, type ProfileHistoryEntry } from '../lib/fetch-profile-history';
 import { fetchProfilesForComparison, type ComparisonProfile } from '../lib/fetch-profiles-for-comparison';
 import { ComparisonPanel } from './ComparisonPanel';
+import { HistorySkeleton } from './HistorySkeleton';
 import { PositionChangeBanner } from './PositionChangeBanner';
 
 interface HistoryScreenProps {
@@ -128,7 +130,7 @@ export function HistoryScreen({ onBack, onManageAccount }: HistoryScreenProps) {
           {error}
         </p>
       )}
-      {!error && entries === null && <p className="text-neutral-500">Memuat riwayat…</p>}
+      {!error && entries === null && <HistorySkeleton />}
       {entries !== null && entries.length === 0 && <p className="text-neutral-500">Belum ada riwayat tersimpan.</p>}
 
       {entries !== null && entries.length > 0 && (
@@ -183,6 +185,9 @@ export function HistoryScreen({ onBack, onManageAccount }: HistoryScreenProps) {
                           {POSITION_NAMES[entry.mainPosition.position]}
                         </p>
                         <p className="text-sm text-neutral-600">Skor {Math.round(entry.mainPosition.score)}</p>
+                        <div className="mt-2">
+                          <PositionBadge position={entry.mainPosition.position} />
+                        </div>
                       </div>
                       {isComparing && (
                         <input

@@ -6,7 +6,7 @@ import {
   COLLAPSIBLE_TRANSITION,
   COLLAPSIBLE_VISIBLE,
 } from '../../../components/ui/collapsible-motion';
-import { ROLE_METADATA, POSITION_NAMES, type RoleScore } from '../../scoring';
+import { ROLE_METADATA, type RoleScore } from '../../scoring';
 
 interface AllRolesListProps {
   roleScores: RoleScore[];
@@ -79,10 +79,7 @@ export function AllRolesList({ roleScores }: AllRolesListProps) {
 
                 return (
                   <li key={score.role} className="flex min-h-touch items-center justify-between gap-3 px-4 py-3">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-neutral-800">{metadata.name}</span>
-                      <span className="text-xs text-neutral-500">{POSITION_NAMES[metadata.position]}</span>
-                    </div>
+                    <span className="text-sm font-medium text-neutral-800">{metadata.name}</span>
                     <div className="flex items-center gap-2">
                       {isLocked && (
                         <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600">

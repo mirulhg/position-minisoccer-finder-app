@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { BallSpinner } from '../../../components/ui/BallSpinner';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { supabase } from '../../../lib/supabase';
@@ -71,6 +72,7 @@ export function LoginForm({ onEmailSent }: LoginFormProps) {
           enterKeyHint="send"
         />
         <Button type="submit" variant="secondary" disabled={isSendingLink} className="w-full">
+          {isSendingLink && <BallSpinner />}
           {isSendingLink ? 'Mengirim tautan…' : 'Kirim tautan masuk'}
         </Button>
       </form>

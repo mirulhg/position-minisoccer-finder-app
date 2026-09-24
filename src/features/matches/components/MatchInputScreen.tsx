@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthSession } from '../../auth';
+import { BallSpinner } from '../../../components/ui/BallSpinner';
 import { Button } from '../../../components/ui/Button';
 import { ChoiceCard } from '../../../components/ui/ChoiceCard';
 import { NumberStepper } from '../../../components/ui/NumberStepper';
@@ -195,6 +196,7 @@ export function MatchInputScreen({ onDone, onBack }: MatchInputScreenProps) {
       )}
 
       <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
+        {isSubmitting && <BallSpinner />}
         {isSubmitting ? 'Menyimpan…' : 'Selesai'}
       </Button>
     </div>

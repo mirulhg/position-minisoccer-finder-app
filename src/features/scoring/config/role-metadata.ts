@@ -130,6 +130,17 @@ export const POSITION_NAMES: Record<PositionCode, string> = {
   ST: 'Penyerang',
 };
 
+/** Istilah Inggris posisi — ditampilkan berdampingan dengan `POSITION_NAMES` di `PositionBadge`. */
+export const POSITION_ENGLISH_NAMES: Record<PositionCode, string> = {
+  GK: 'Goalkeeper',
+  CB: 'Center Back',
+  FB: 'Fullback',
+  DM: 'Defensive Midfielder',
+  CM: 'Central Midfielder',
+  WM: 'Winger',
+  ST: 'Striker',
+};
+
 export const ALL_ROLE_CODES = Object.keys(ROLE_METADATA) as RoleCode[];
 
 /**
