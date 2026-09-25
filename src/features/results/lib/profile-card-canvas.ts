@@ -11,14 +11,25 @@ export interface ProfileCardData {
   positionName: string;
   positionScore: number;
   position: PositionCode;
-  /** null kalau hasil ini tidak punya posisi alternatif — kolom kanan di-skip, bukan digambar kosong. */
+  /** null kalau hasil ini tidak punya posisi alternatif — kolom kanan & section role alternatif di-skip, bukan digambar kosong. */
   alternativePosition: { name: string; score: number; position: PositionCode } | null;
   roles: { name: string; fit: number; role: RoleCode }[];
+  /** Kosong kalau tidak ada posisi alternatif (lihat `alternativePosition`) — bukan dipaksa berisi data palsu. */
+  alternativeRoles: { name: string; fit: number; role: RoleCode }[];
   topAttributes: { label: string; value: number }[];
 }
 
 const CARD_WIDTH = 1080;
-const CARD_HEIGHT = 1350;
+
+// CARD_HEIGHT dihitung dinamis di drawProfileCard (bukan konstanta tetap)
+// karena kartu jadi lebih tinggi kalau ada section role posisi alternatif,
+// dan lebih pendek lagi kalau tidak ada posisi alternatif sama sekali.
+const HEADER_HEIGHT = 260;
+const ROLE_LIST_START_Y = 620;
+const ROLE_ROW_HEIGHT = 70;
+const SECTION_LABEL_GAP = 40;
+const SECTION_CONTENT_GAP = 60;
+const CARD_BOTTOM_PADDING = 280;
 
 const CARD_SIDE_MARGIN = 60;
 const POSITION_COLUMN_GAP = 40;
@@ -50,9 +61,13 @@ const CODE_CHIP_PADDING_Y = 10;
 const CODE_CHIP_RADIUS = 10;
 
 const ROLE_CHIP_FONT_SIZE = 30;
+const ROLE_CHIP_MIN_FONT_SIZE = 20;
 const ROLE_CHIP_PADDING_X = 18;
 const ROLE_CHIP_PADDING_Y = 9;
 const ROLE_CHIP_RADIUS = 10;
+// Lebar maksimum chip label role — dari margin kiri sampai sebelum kolom
+// angka fit di kanan (CARD_WIDTH - 160), dikurangi jarak aman ke kolom itu.
+const ROLE_CHIP_MAX_WIDTH = CARD_WIDTH - 160 - CARD_SIDE_MARGIN - 40;
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
   ctx.beginPath();
@@ -146,11 +161,12 @@ function drawLabeledChip(
   y: number,
   bgColor: string,
   textColor: string,
+  fontSize: number = ROLE_CHIP_FONT_SIZE,
 ): ChipMetrics {
   ctx.save();
-  ctx.font = `700 ${ROLE_CHIP_FONT_SIZE}px ${FONT_FAMILY}`;
+  ctx.font = `700 ${fontSize}px ${FONT_FAMILY}`;
   const width = ctx.measureText(label).width + ROLE_CHIP_PADDING_X * 2;
-  const height = ROLE_CHIP_FONT_SIZE + ROLE_CHIP_PADDING_Y * 2;
+  const height = fontSize + ROLE_CHIP_PADDING_Y * 2;
 
   ctx.fillStyle = bgColor;
   drawRoundedRect(ctx, x, y, width, height, ROLE_CHIP_RADIUS);
@@ -221,19 +237,78 @@ function drawPositionColumn(ctx: CanvasRenderingContext2D, data: PositionColumnD
   ctx.fillText(fittedScore.text, x, y);
 }
 
-/** FR-18 — kartu profil 1080x1350 untuk dibagikan. Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
+interface RoleRow {
+  name: string;
+  fit: number;
+  role: RoleCode;
+}
+
+/**
+ * Satu daftar role (chip "[KODE] Nama" + angka fit di kanan), dipakai identik
+ * untuk daftar role posisi utama maupun alternatif — reuse apa adanya, cuma
+ * `roles` & `startY` beda. Mengembalikan y setelah baris terakhir.
+ */
+function drawRoleList(ctx: CanvasRenderingContext2D, roles: RoleRow[], startY: number): number {
+  let y = startY;
+  for (const role of roles) {
+    const roleAreaColor = POSITION_AREA_COLORS[POSITION_AREA[ROLE_METADATA[role.role].position]];
+    const fittedLabel = fitTextToWidth(
+      ctx,
+      `[${role.role.split('-')[1]}] ${role.name}`,
+      ROLE_CHIP_MAX_WIDTH,
+      ROLE_CHIP_FONT_SIZE,
+      ROLE_CHIP_MIN_FONT_SIZE,
+      700,
+    );
+    drawLabeledChip(
+      ctx,
+      fittedLabel.text,
+      CARD_SIDE_MARGIN,
+      y - 35,
+      roleAreaColor.bg,
+      roleAreaColor.text,
+      fittedLabel.fontSize,
+    );
+
+    ctx.fillStyle = COLOR_TEXT_DARK;
+    ctx.font = `700 40px ${FONT_FAMILY}`;
+    ctx.fillText(String(Math.round(role.fit)), CARD_WIDTH - 160, y);
+    y += ROLE_ROW_HEIGHT;
+  }
+  return y;
+}
+
+/** FR-18 — kartu profil untuk dibagikan (lebar tetap 1080, tinggi menyesuaikan konten — lebih tinggi kalau ada section role posisi alternatif). Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
 export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData): void {
+  const hasAlternativeRoles = data.alternativePosition !== null && data.alternativeRoles.length > 0;
+
+  // Hitung tinggi kartu di muka (bukan sambil menggambar) — mengeset
+  // canvas.height membersihkan kanvas, jadi tidak bisa dihitung belakangan.
+  const mainRoleListEndY = ROLE_LIST_START_Y + data.roles.length * ROLE_ROW_HEIGHT;
+  let nextSectionY = mainRoleListEndY;
+  let altRoleLabelY = 0;
+  let altRoleListStartY = 0;
+  if (hasAlternativeRoles) {
+    altRoleLabelY = nextSectionY + SECTION_LABEL_GAP;
+    altRoleListStartY = altRoleLabelY + SECTION_CONTENT_GAP;
+    nextSectionY = altRoleListStartY + data.alternativeRoles.length * ROLE_ROW_HEIGHT;
+  }
+  const kekuatanLabelY = nextSectionY + SECTION_LABEL_GAP;
+  const attrStartY = kekuatanLabelY + SECTION_CONTENT_GAP;
+  const attrEndY = attrStartY + data.topAttributes.length * ROLE_ROW_HEIGHT;
+  const cardHeight = attrEndY + CARD_BOTTOM_PADDING;
+
   canvas.width = CARD_WIDTH;
-  canvas.height = CARD_HEIGHT;
+  canvas.height = cardHeight;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D context tidak tersedia di browser ini.');
 
   ctx.fillStyle = COLOR_BACKGROUND;
-  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  ctx.fillRect(0, 0, CARD_WIDTH, cardHeight);
 
   ctx.fillStyle = COLOR_HEADER;
-  ctx.fillRect(0, 0, CARD_WIDTH, 260);
+  ctx.fillRect(0, 0, CARD_WIDTH, HEADER_HEIGHT);
 
   ctx.fillStyle = COLOR_WHITE;
   ctx.font = `400 32px ${FONT_FAMILY}`;
@@ -260,24 +335,20 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
     );
   }
 
-  let y = 620;
-  for (const role of data.roles) {
-    const roleAreaColor = POSITION_AREA_COLORS[POSITION_AREA[ROLE_METADATA[role.role].position]];
-    const roleLabel = `[${role.role.split('-')[1]}] ${role.name}`;
-    drawLabeledChip(ctx, roleLabel, 60, y - 35, roleAreaColor.bg, roleAreaColor.text);
+  drawRoleList(ctx, data.roles, ROLE_LIST_START_Y);
 
-    ctx.fillStyle = COLOR_TEXT_DARK;
-    ctx.font = `700 40px ${FONT_FAMILY}`;
-    ctx.fillText(String(Math.round(role.fit)), CARD_WIDTH - 160, y);
-    y += 70;
+  if (hasAlternativeRoles) {
+    ctx.fillStyle = COLOR_TEXT_MUTED;
+    ctx.font = `400 34px ${FONT_FAMILY}`;
+    ctx.fillText('Role terbaik — Posisi Alternatif', CARD_SIDE_MARGIN, altRoleLabelY);
+    drawRoleList(ctx, data.alternativeRoles, altRoleListStartY);
   }
 
-  y += 40;
   ctx.fillStyle = COLOR_TEXT_MUTED;
   ctx.font = `400 34px ${FONT_FAMILY}`;
-  ctx.fillText('Kekuatan utama', 60, y);
-  y += 60;
+  ctx.fillText('Kekuatan utama', 60, kekuatanLabelY);
 
+  let y = attrStartY;
   for (const attribute of data.topAttributes) {
     ctx.fillStyle = COLOR_TEXT_DARK;
     ctx.font = `400 38px ${FONT_FAMILY}`;
@@ -285,7 +356,7 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
     ctx.fillStyle = COLOR_TEXT_DARK;
     ctx.font = `700 38px ${FONT_FAMILY}`;
     ctx.fillText(String(Math.round(attribute.value)), CARD_WIDTH - 160, y);
-    y += 70;
+    y += ROLE_ROW_HEIGHT;
   }
 }
 

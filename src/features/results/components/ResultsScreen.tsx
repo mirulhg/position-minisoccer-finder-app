@@ -110,9 +110,14 @@ export function ResultsScreen({
         fit: score.fit,
         role: score.role,
       })),
+      alternativeRoles: topRolesInAlternativePosition.map((score) => ({
+        name: ROLE_METADATA[score.role].name,
+        fit: score.fit,
+        role: score.role,
+      })),
       topAttributes,
     };
-  }, [result, session, topRolesInMainPosition, alternativePosition]);
+  }, [result, session, topRolesInMainPosition, topRolesInAlternativePosition, alternativePosition]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 md:grid md:grid-cols-2 md:gap-6">
