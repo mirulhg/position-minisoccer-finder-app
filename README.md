@@ -30,4 +30,16 @@ Supabase. Salin `.env.example` ke `.env.local` lalu isi `VITE_SUPABASE_URL`
 dan `VITE_SUPABASE_PUBLISHABLE_KEY`. Tanpa ini, alur Fase 1
 (onboarding→kuesioner→hasil) tetap berjalan penuh.
 
-Lihat `Docs/CLAUDE.md` untuk aturan kerja dan `Docs/PRD-Minisoccer-Position-Role-Finder.md` untuk spesifikasi produk.
+## Dokumentasi lebih lanjut
+
+- `Docs/CLAUDE.md` — aturan kerja untuk siapa pun (manusia atau AI) yang
+  mengedit kode di repo ini.
+- `Docs/PRD-Minisoccer-Position-Role-Finder.md` — spesifikasi produk
+  lengkap (Lampiran C.5).
+- `Docs/UI-UX-Principal.md` & `Docs/UI-Animation-Principal.md` — prinsip
+  desain dan animasi yang dipakai sebagai acuan review.
+- [`CHANGELOG.md`](CHANGELOG.md) — riwayat perubahan tiap fase/fitur/fix.
+- [`ROADMAP.md`](ROADMAP.md) — ide dan rencana yang belum dikerjakan,
+  termasuk rencana kalibrasi Fase 0.
+- `plans/` — rencana perbaikan UI/animasi yang dieksekusi lewat skill
+  `improve-animations`.
