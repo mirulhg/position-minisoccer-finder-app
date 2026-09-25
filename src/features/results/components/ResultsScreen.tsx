@@ -12,10 +12,12 @@ import {
   rankAttributesDescending,
   type PhysicalProfile,
   type PositionCode,
+  type PositionScore,
+  type RoleScore,
 } from '../../scoring';
 import { buildScoringInput } from '../lib/answers-to-scoring-input';
 import { MainPositionHeader } from './MainPositionHeader';
-import { RoleCard } from './RoleCard';
+import { RoleTabsSection } from './RoleTabsSection';
 import { WhyBlock } from './WhyBlock';
 import { PillarRadar } from './PillarRadar';
 import { PillarBreakdown } from './PillarBreakdown';
@@ -24,6 +26,13 @@ import { AllRolesList } from './AllRolesList';
 import { SaveResultSection } from './SaveResultSection';
 import { ResultActions } from './ResultActions';
 import { RestartButton } from '../../../components/RestartButton';
+
+/** Top role (bestRole + secondRole) dari sebuah posisi, diurutkan fit desc — dipakai untuk posisi utama maupun alternatif. */
+function topRolesForPosition(roleScores: RoleScore[], positionScore: PositionScore): RoleScore[] {
+  return roleScores
+    .filter((score) => score.role === positionScore.bestRole || score.role === positionScore.secondRole)
+    .sort((a, b) => b.fit - a.fit);
+}
 
 interface ResultsScreenProps {
   answers: Record<string, AnswerValue>;
@@ -59,17 +68,21 @@ export function ResultsScreen({
     });
   }, [result]);
 
-  const topRolesInMainPosition = useMemo(() => {
-    return result.roleScores
-      .filter((score) => score.role === result.mainPosition.bestRole || score.role === result.mainPosition.secondRole)
-      .sort((a, b) => b.fit - a.fit);
-  }, [result]);
+  const topRolesInMainPosition = useMemo(
+    () => topRolesForPosition(result.roleScores, result.mainPosition),
+    [result],
+  );
 
   const alternativePosition = useMemo(() => {
     return [...result.positionScores]
       .filter((score) => score.position !== result.mainPosition.position)
       .sort((a, b) => b.score - a.score)[0];
   }, [result]);
+
+  const topRolesInAlternativePosition = useMemo(() => {
+    if (!alternativePosition) return [];
+    return topRolesForPosition(result.roleScores, alternativePosition);
+  }, [result, alternativePosition]);
 
   const pillarAverages = useMemo(() => computePillarAverages(result.attributes), [result]);
 
@@ -107,9 +120,13 @@ export function ResultsScreen({
         </div>
       </div>
 
-      {topRolesInMainPosition.map((roleScore) => (
-        <RoleCard key={roleScore.role} roleScore={roleScore} />
-      ))}
+      <div className="md:col-span-2">
+        <RoleTabsSection
+          mainRoles={topRolesInMainPosition}
+          alternativeRoles={topRolesInAlternativePosition}
+          hasAlternative={!!alternativePosition}
+        />
+      </div>
 
       <div className="md:col-span-2">
         <WhyBlock attributes={result.attributes} />
