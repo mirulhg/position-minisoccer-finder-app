@@ -101,7 +101,10 @@ export function ResultsScreen({
       </div>
 
       <div className="md:col-span-2 results-reveal">
-        <MainPositionHeader positionScore={result.mainPosition} confidenceLabel={result.confidenceLabel} />
+        <div className={alternativePosition ? 'grid grid-cols-2 gap-4' : ''}>
+          <MainPositionHeader positionScore={result.mainPosition} confidenceLabel={result.confidenceLabel} />
+          {alternativePosition && <AlternativePosition positionScore={alternativePosition} />}
+        </div>
       </div>
 
       {topRolesInMainPosition.map((roleScore) => (
@@ -119,12 +122,6 @@ export function ResultsScreen({
       <div className="md:col-span-2">
         <PillarBreakdown values={pillarAverages} />
       </div>
-
-      {alternativePosition && (
-        <div className="md:col-span-2">
-          <AlternativePosition positionScore={alternativePosition} />
-        </div>
-      )}
 
       <div className="md:col-span-2">
         <AllRolesList roleScores={result.roleScores} />

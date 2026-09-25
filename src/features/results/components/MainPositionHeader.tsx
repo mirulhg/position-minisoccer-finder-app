@@ -11,13 +11,13 @@ export function MainPositionHeader({ positionScore, confidenceLabel }: MainPosit
   const score = Math.round(positionScore.score);
 
   return (
-    <div className="flex flex-col gap-2 text-center">
-      <p className="text-sm text-neutral-500">Posisi utamamu</p>
-      <h1 className="text-4xl font-semibold text-neutral-900">{POSITION_ENGLISH_NAMES[positionScore.position]}</h1>
-      <div className="flex justify-center">
-        <PositionCodeBadge position={positionScore.position} />
-      </div>
-      <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="text-xs text-neutral-500 sm:text-sm">Posisi utamamu</p>
+      <h1 className="text-2xl font-semibold leading-tight text-neutral-900 sm:text-3xl">
+        {POSITION_ENGLISH_NAMES[positionScore.position]}
+      </h1>
+      <PositionCodeBadge position={positionScore.position} />
+      <div className="flex flex-col items-center gap-1">
         <span className="text-2xl font-semibold text-neutral-900">
           <AnimatedScore value={score} duration={1.1} />
           <span className="sr-only">{score}</span>
