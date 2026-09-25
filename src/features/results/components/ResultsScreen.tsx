@@ -98,6 +98,13 @@ export function ResultsScreen({
       positionName: POSITION_ENGLISH_NAMES[result.mainPosition.position],
       positionScore: result.mainPosition.score,
       position: result.mainPosition.position,
+      alternativePosition: alternativePosition
+        ? {
+            name: POSITION_ENGLISH_NAMES[alternativePosition.position],
+            score: alternativePosition.score,
+            position: alternativePosition.position,
+          }
+        : null,
       roles: topRolesInMainPosition.map((score) => ({
         name: ROLE_METADATA[score.role].name,
         fit: score.fit,
@@ -105,7 +112,7 @@ export function ResultsScreen({
       })),
       topAttributes,
     };
-  }, [result, session, topRolesInMainPosition]);
+  }, [result, session, topRolesInMainPosition, alternativePosition]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 md:grid md:grid-cols-2 md:gap-6">

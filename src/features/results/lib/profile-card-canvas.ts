@@ -11,12 +11,24 @@ export interface ProfileCardData {
   positionName: string;
   positionScore: number;
   position: PositionCode;
+  /** null kalau hasil ini tidak punya posisi alternatif — kolom kanan di-skip, bukan digambar kosong. */
+  alternativePosition: { name: string; score: number; position: PositionCode } | null;
   roles: { name: string; fit: number; role: RoleCode }[];
   topAttributes: { label: string; value: number }[];
 }
 
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1350;
+
+const CARD_SIDE_MARGIN = 60;
+const POSITION_COLUMN_GAP = 40;
+const POSITION_COLUMN_WIDTH = (CARD_WIDTH - CARD_SIDE_MARGIN * 2 - POSITION_COLUMN_GAP) / 2;
+
+const POSITION_NAME_START_FONT_SIZE = 60;
+const POSITION_NAME_MIN_FONT_SIZE = 40;
+const POSITION_SCORE_START_FONT_SIZE = 48;
+const POSITION_SCORE_MIN_FONT_SIZE = 32;
+const POSITION_CODE_MIN_FONT_SIZE = 23;
 
 // Canvas tidak bisa memakai class Tailwind — nilai di bawah disalin dari
 // token warna di tailwind.config.ts (brand-ink, neutral-50/900/600).
@@ -61,6 +73,44 @@ interface ChipMetrics {
   height: number;
 }
 
+interface FittedText {
+  text: string;
+  fontSize: number;
+}
+
+/**
+ * Turunkan font size 1px demi 1px sampai `text` muat di `maxWidth` pada
+ * `startFontSize`, tapi tidak pernah di bawah `minFontSize`. Kalau di
+ * `minFontSize` pun masih kepanjangan (nama sangat panjang), potong dengan
+ * ellipsis sebagai upaya terakhir — teks TIDAK PERNAH melebar keluar `maxWidth`.
+ */
+function fitTextToWidth(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  startFontSize: number,
+  minFontSize: number,
+  fontWeight: number,
+): FittedText {
+  let fontSize = startFontSize;
+  ctx.font = `${fontWeight} ${fontSize}px ${FONT_FAMILY}`;
+
+  while (ctx.measureText(text).width > maxWidth && fontSize > minFontSize) {
+    fontSize -= 1;
+    ctx.font = `${fontWeight} ${fontSize}px ${FONT_FAMILY}`;
+  }
+
+  if (ctx.measureText(text).width <= maxWidth) {
+    return { text, fontSize };
+  }
+
+  let truncated = text;
+  while (truncated.length > 1 && ctx.measureText(`${truncated}…`).width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return { text: `${truncated}…`, fontSize };
+}
+
 /** Chip kode posisi saja (mis. "ST"), meniru `PositionCodeBadge`. */
 function drawCodeChip(
   ctx: CanvasRenderingContext2D,
@@ -69,11 +119,12 @@ function drawCodeChip(
   y: number,
   bgColor: string,
   textColor: string,
+  fontSize: number = CODE_CHIP_FONT_SIZE,
 ): ChipMetrics {
   ctx.save();
-  ctx.font = `700 ${CODE_CHIP_FONT_SIZE}px ${FONT_FAMILY}`;
+  ctx.font = `700 ${fontSize}px ${FONT_FAMILY}`;
   const width = ctx.measureText(code).width + CODE_CHIP_PADDING_X * 2;
-  const height = CODE_CHIP_FONT_SIZE + CODE_CHIP_PADDING_Y * 2;
+  const height = fontSize + CODE_CHIP_PADDING_Y * 2;
 
   ctx.fillStyle = bgColor;
   drawRoundedRect(ctx, x, y, width, height, CODE_CHIP_RADIUS);
@@ -113,6 +164,63 @@ function drawLabeledChip(
   return { width, height };
 }
 
+interface PositionColumnData {
+  label: string;
+  name: string;
+  position: PositionCode;
+  score: number;
+}
+
+/**
+ * Satu kolom blok posisi (label → nama → chip kode → skor), dipakai identik
+ * untuk posisi utama (kolom kiri) maupun alternatif (kolom kanan) — cuma
+ * datanya beda, urutan & style elemen sama persis.
+ */
+function drawPositionColumn(ctx: CanvasRenderingContext2D, data: PositionColumnData, x: number): void {
+  let y = 340;
+  ctx.fillStyle = COLOR_TEXT_MUTED;
+  ctx.font = `400 36px ${FONT_FAMILY}`;
+  ctx.fillText(data.label, x, y);
+
+  y += 80;
+  const fittedName = fitTextToWidth(
+    ctx,
+    data.name,
+    POSITION_COLUMN_WIDTH,
+    POSITION_NAME_START_FONT_SIZE,
+    POSITION_NAME_MIN_FONT_SIZE,
+    700,
+  );
+  ctx.fillStyle = COLOR_TEXT_DARK;
+  ctx.font = `700 ${fittedName.fontSize}px ${FONT_FAMILY}`;
+  ctx.fillText(fittedName.text, x, y);
+
+  y += 40;
+  const areaColor = POSITION_AREA_COLORS[POSITION_AREA[data.position]];
+  const fittedCode = fitTextToWidth(
+    ctx,
+    data.position,
+    POSITION_COLUMN_WIDTH - CODE_CHIP_PADDING_X * 2,
+    CODE_CHIP_FONT_SIZE,
+    POSITION_CODE_MIN_FONT_SIZE,
+    700,
+  );
+  const chipMetrics = drawCodeChip(ctx, fittedCode.text, x, y, areaColor.bg, areaColor.text, fittedCode.fontSize);
+
+  y += chipMetrics.height + 50;
+  const fittedScore = fitTextToWidth(
+    ctx,
+    String(Math.round(data.score)),
+    POSITION_COLUMN_WIDTH,
+    POSITION_SCORE_START_FONT_SIZE,
+    POSITION_SCORE_MIN_FONT_SIZE,
+    700,
+  );
+  ctx.fillStyle = COLOR_TEXT_DARK;
+  ctx.font = `700 ${fittedScore.fontSize}px ${FONT_FAMILY}`;
+  ctx.fillText(fittedScore.text, x, y);
+}
+
 /** FR-18 — kartu profil 1080x1350 untuk dibagikan. Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
 export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData): void {
   canvas.width = CARD_WIDTH;
@@ -133,21 +241,24 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
   ctx.font = `700 64px ${FONT_FAMILY}`;
   ctx.fillText(data.displayName, 60, 180);
 
-  ctx.fillStyle = COLOR_TEXT_MUTED;
-  ctx.font = `400 36px ${FONT_FAMILY}`;
-  ctx.fillText('Posisi utama', 60, 340);
+  drawPositionColumn(
+    ctx,
+    { label: 'Posisi utama', name: data.positionName, position: data.position, score: data.positionScore },
+    CARD_SIDE_MARGIN,
+  );
 
-  ctx.fillStyle = COLOR_TEXT_DARK;
-  ctx.font = `700 88px ${FONT_FAMILY}`;
-  ctx.fillText(data.positionName, 60, 440);
-  const positionNameWidth = ctx.measureText(data.positionName).width;
-
-  const positionAreaColor = POSITION_AREA_COLORS[POSITION_AREA[data.position]];
-  drawCodeChip(ctx, data.position, 60 + positionNameWidth + 28, 380, positionAreaColor.bg, positionAreaColor.text);
-
-  ctx.fillStyle = COLOR_TEXT_DARK;
-  ctx.font = `700 48px ${FONT_FAMILY}`;
-  ctx.fillText(String(Math.round(data.positionScore)), 60, 500);
+  if (data.alternativePosition) {
+    drawPositionColumn(
+      ctx,
+      {
+        label: 'Posisi alternatif',
+        name: data.alternativePosition.name,
+        position: data.alternativePosition.position,
+        score: data.alternativePosition.score,
+      },
+      CARD_SIDE_MARGIN + POSITION_COLUMN_WIDTH + POSITION_COLUMN_GAP,
+    );
+  }
 
   let y = 620;
   for (const role of data.roles) {
