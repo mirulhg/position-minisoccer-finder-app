@@ -29,7 +29,10 @@ const ROLE_LIST_START_Y = 620;
 const ROLE_ROW_HEIGHT = 70;
 const SECTION_LABEL_GAP = 40;
 const SECTION_CONTENT_GAP = 60;
-const CARD_BOTTOM_PADDING = 280;
+// Footer kredit menggantikan padding bawah polos yang dulu ada di sini —
+// jarak dari section terakhir ke baseline footer, lalu dari footer ke tepi kartu.
+const FOOTER_TOP_GAP = ROLE_ROW_HEIGHT;
+const FOOTER_BOTTOM_PADDING = 90;
 
 const CARD_SIDE_MARGIN = 60;
 const POSITION_COLUMN_GAP = 40;
@@ -46,9 +49,19 @@ const POSITION_CODE_MIN_FONT_SIZE = 23;
 const COLOR_BACKGROUND = '#fafafa';
 const COLOR_HEADER = '#38003C';
 const COLOR_TEXT_DARK = '#1a1815';
-const COLOR_TEXT_MUTED = '#5b5851';
+const COLOR_TEXT_MUTED = '#5b5851'; // neutral-600
+const COLOR_TEXT_MUTED_LIGHT = '#79766e'; // neutral-500 — "Developed by" & versi di footer (AppFooter pakai text-neutral-500)
 const COLOR_WHITE = '#ffffff';
 const FONT_FAMILY = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+// Footer kredit developer, meniru `AppFooter.tsx` persis (teks, urutan,
+// warna) — font kustomnya (Alex Brush, Fira Code) sama dengan yang dimuat
+// index.html lewat <link> Google Fonts untuk AppFooter itu sendiri.
+const FOOTER_FONT_SIZE = 28; // setara text-xs (12px) di layar, skala sama dengan chip role (30px/text-xs)
+const FOOTER_SCRIPT_FONT_SIZE = 36; // setara text-sm (14px) — "dev.myrules" sedikit lebih besar, sama seperti di AppFooter
+const FOOTER_GAP = 20;
+const FOOTER_SCRIPT_FONT_FAMILY = '"Alex Brush", cursive';
+const FOOTER_MONO_FONT_FAMILY = '"Fira Code", ui-monospace, SFMono-Regular, monospace';
 
 // Chip berwarna area posisi, meniru PositionCodeBadge/RoleBadge (yang pakai
 // Tailwind rounded-lg/rounded-full) — Canvas tidak bisa reuse komponen React,
@@ -278,6 +291,62 @@ function drawRoleList(ctx: CanvasRenderingContext2D, roles: RoleRow[], startY: n
   return y;
 }
 
+// Font kustom footer (Alex Brush, Fira Code) dimuat lewat <link> Google Fonts
+// di index.html — sama seperti yang dipakai AppFooter.tsx di layar (font
+// itu jadi otomatis diminta browser saat halaman pertama kali render, dan
+// AppFooter sendiri SELALU tampil di setiap layar app, jadi pada saat user
+// sempat mengklik "Bagikan kartu profil" font ini praktis sudah termuat).
+// `drawProfileCard` di bawah TETAP sinkron (pemanggilnya di ResultActions.tsx
+// tidak meng-await-nya) — jadi di sini fontnya diminta se-dini mungkin lewat
+// document.fonts.load() (fire-and-forget) saat modul ini diimpor, lalu
+// dicek sinkron lewat document.fonts.check() tepat sebelum menggambar teks
+// footer: kalau sudah termuat pakai font aslinya, kalau belum (sangat
+// jarang) fallback ke keluarga generic (cursive/monospace) supaya TIDAK
+// diam-diam jatuh ke font default sans-serif tanpa terlihat bedanya sama
+// sekali — bukan skenario ideal, tapi tanpa mengubah ResultActions.tsx jadi
+// async ini best-effort paling aman.
+if (typeof document !== 'undefined' && 'fonts' in document) {
+  document.fonts.load(`400 ${FOOTER_SCRIPT_FONT_SIZE}px "Alex Brush"`).catch(() => {});
+  document.fonts.load(`400 ${FOOTER_FONT_SIZE}px "Fira Code"`).catch(() => {});
+}
+
+function isFontLoaded(family: string, size: number): boolean {
+  if (typeof document === 'undefined' || !('fonts' in document)) return false;
+  try {
+    return document.fonts.check(`400 ${size}px ${family}`);
+  } catch {
+    return false;
+  }
+}
+
+/** Footer kredit developer, meniru `AppFooter.tsx` persis — dipusatkan secara horizontal di paling bawah kartu. */
+function drawFooter(ctx: CanvasRenderingContext2D, footerY: number): void {
+  const scriptFamily = isFontLoaded('"Alex Brush"', FOOTER_SCRIPT_FONT_SIZE) ? FOOTER_SCRIPT_FONT_FAMILY : 'cursive';
+  const monoFamily = isFontLoaded('"Fira Code"', FOOTER_FONT_SIZE) ? FOOTER_MONO_FONT_FAMILY : 'monospace';
+
+  const segments = [
+    { text: 'Developed by', font: `400 ${FOOTER_FONT_SIZE}px ${FONT_FAMILY}`, color: COLOR_TEXT_MUTED_LIGHT },
+    { text: 'dev.myrules', font: `400 ${FOOTER_SCRIPT_FONT_SIZE}px ${scriptFamily}`, color: COLOR_TEXT_MUTED },
+    { text: '·', font: `400 ${FOOTER_FONT_SIZE}px ${FONT_FAMILY}`, color: COLOR_TEXT_MUTED_LIGHT },
+    { text: `v${__APP_VERSION__}`, font: `400 ${FOOTER_FONT_SIZE}px ${monoFamily}`, color: COLOR_TEXT_MUTED_LIGHT },
+  ];
+
+  ctx.textBaseline = 'alphabetic';
+  const widths = segments.map((segment) => {
+    ctx.font = segment.font;
+    return ctx.measureText(segment.text).width;
+  });
+  const totalWidth = widths.reduce((sum, width) => sum + width, 0) + FOOTER_GAP * (segments.length - 1);
+
+  let x = (CARD_WIDTH - totalWidth) / 2;
+  segments.forEach((segment, index) => {
+    ctx.font = segment.font;
+    ctx.fillStyle = segment.color;
+    ctx.fillText(segment.text, x, footerY);
+    x += widths[index] + FOOTER_GAP;
+  });
+}
+
 /** FR-18 — kartu profil untuk dibagikan (lebar tetap 1080, tinggi menyesuaikan konten — lebih tinggi kalau ada section role posisi alternatif). Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
 export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData): void {
   const hasAlternativeRoles = data.alternativePosition !== null && data.alternativeRoles.length > 0;
@@ -296,7 +365,8 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
   const kekuatanLabelY = nextSectionY + SECTION_LABEL_GAP;
   const attrStartY = kekuatanLabelY + SECTION_CONTENT_GAP;
   const attrEndY = attrStartY + data.topAttributes.length * ROLE_ROW_HEIGHT;
-  const cardHeight = attrEndY + CARD_BOTTOM_PADDING;
+  const footerY = attrEndY + FOOTER_TOP_GAP;
+  const cardHeight = footerY + FOOTER_BOTTOM_PADDING;
 
   canvas.width = CARD_WIDTH;
   canvas.height = cardHeight;
@@ -358,6 +428,8 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
     ctx.fillText(String(Math.round(attribute.value)), CARD_WIDTH - 160, y);
     y += ROLE_ROW_HEIGHT;
   }
+
+  drawFooter(ctx, footerY);
 }
 
 /** `canvas.toBlob` → Web Share API kalau didukung, fallback unduh PNG. */
