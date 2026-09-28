@@ -1,8 +1,25 @@
 import { motion, useReducedMotion, type Variants } from 'motion/react';
 import { Card } from '../../../components/ui/Card';
+import { useLocalizedPillarLabel, useTranslation } from '../../../i18n';
 import { PILLARS, type Pillar } from '../../scoring';
 import { PILLAR_ICON_PATHS } from '../config/pillar-icons';
 import { AnimatedScore } from './AnimatedScore';
+
+function PillarRow({ pillar, score }: { pillar: Pillar; score: number }) {
+  const label = useLocalizedPillarLabel(pillar);
+  return (
+    <motion.li className="flex justify-between text-sm text-neutral-700" variants={item}>
+      <span className="flex items-center gap-2">
+        <img src={PILLAR_ICON_PATHS[pillar]} alt={label} className="h-6 w-6" />
+        {label}
+      </span>
+      <span className="font-medium">
+        <AnimatedScore value={score} />
+        <span className="sr-only">{score}</span>
+      </span>
+    </motion.li>
+  );
+}
 
 interface PillarBreakdownProps {
   values: Record<Pillar, number>;
@@ -24,32 +41,21 @@ const item: Variants = {
 };
 
 export function PillarBreakdown({ values }: PillarBreakdownProps) {
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
 
   return (
     <Card>
-      <h3 className="text-base font-semibold text-neutral-900">Rincian pilar</h3>
+      <h3 className="text-base font-semibold text-neutral-900">{t.results.pillarBreakdown.title}</h3>
       <motion.ul
         className="mt-3 flex flex-col gap-3"
         variants={container}
         initial={shouldReduceMotion ? 'show' : 'hidden'}
         animate="show"
       >
-        {PILLARS.map((pillar) => {
-          const score = Math.round(values[pillar]);
-          return (
-            <motion.li key={pillar} className="flex justify-between text-sm text-neutral-700" variants={item}>
-              <span className="flex items-center gap-2">
-                <img src={PILLAR_ICON_PATHS[pillar]} alt={pillar} className="h-6 w-6" />
-                {pillar}
-              </span>
-              <span className="font-medium">
-                <AnimatedScore value={score} />
-                <span className="sr-only">{score}</span>
-              </span>
-            </motion.li>
-          );
-        })}
+        {PILLARS.map((pillar) => (
+          <PillarRow key={pillar} pillar={pillar} score={Math.round(values[pillar])} />
+        ))}
       </motion.ul>
     </Card>
   );

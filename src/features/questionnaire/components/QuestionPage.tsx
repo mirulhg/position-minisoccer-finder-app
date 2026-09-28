@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { RestartButton } from '../../../components/RestartButton';
+import { useTranslation } from '../../../i18n';
 import { QuestionCard } from './QuestionCard';
 import type { AnswerValue, Question } from '../types';
 
@@ -13,6 +14,7 @@ interface QuestionPageProps {
 }
 
 export function QuestionPage({ questions, initialAnswers, onSubmit, onBack, onRestart }: QuestionPageProps) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState<Record<string, AnswerValue>>(() => {
     const seeded: Record<string, AnswerValue> = {};
     for (const question of questions) {
@@ -42,11 +44,11 @@ export function QuestionPage({ questions, initialAnswers, onSubmit, onBack, onRe
         <div className="flex gap-3">
           {onBack && (
             <Button variant="secondary" onClick={onBack} className="flex-1">
-              Kembali
+              {t.common.back}
             </Button>
           )}
           <Button onClick={() => onSubmit(draft)} disabled={!canSubmit} className="flex-1">
-            Lanjut
+            {t.common.next}
           </Button>
         </div>
         <RestartButton onRestart={onRestart} />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { useTranslation } from '../../../i18n';
 import { trackEvent } from '../../../lib/analytics';
 import { useQuestionnaireSession } from '../hooks/useQuestionnaireSession';
 import { BlockTransition } from './BlockTransition';
@@ -31,6 +32,7 @@ function buildPage(questions: Question[], startIndex: number, pageSize: number):
 }
 
 export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: QuestionnaireFlowProps) {
+  const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { isLoading, questions, answers, currentIndex, isComplete, submitPage, goBackPage } =
     useQuestionnaireSession(willingGoalkeeper);
@@ -70,7 +72,7 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: 
   }, [isLoading, isComplete, showTransition, pageKey]);
 
   if (isLoading) {
-    return <p className="text-center text-neutral-500">Memuat kuesioner…</p>;
+    return <p className="text-center text-neutral-500">{t.questionnaire.loading}</p>;
   }
 
   if (isComplete) {
@@ -101,7 +103,7 @@ export function QuestionnaireFlow({ willingGoalkeeper, onComplete, onRestart }: 
       ) : (
         <div key="question-page" className="flex min-h-dvh flex-col">
           <div className="px-4 pt-4">
-            <ProgressBar percent={(currentIndex / questions.length) * 100} label="Progres kuesioner" />
+            <ProgressBar percent={(currentIndex / questions.length) * 100} label={t.questionnaire.progressLabel} />
           </div>
           <AnimatePresence mode="wait">
             <motion.div

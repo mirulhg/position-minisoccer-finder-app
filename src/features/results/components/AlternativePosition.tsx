@@ -1,4 +1,5 @@
 import { PositionCodeBadge } from '../../../components/ui/PositionBadge';
+import { useTranslation } from '../../../i18n';
 import { POSITION_ENGLISH_NAMES, type PositionScore } from '../../scoring';
 import { AnimatedScore } from './AnimatedScore';
 
@@ -7,11 +8,12 @@ interface AlternativePositionProps {
 }
 
 export function AlternativePosition({ positionScore }: AlternativePositionProps) {
+  const { t } = useTranslation();
   const score = Math.round(positionScore.score);
 
   return (
     <div className="flex flex-col items-center gap-2 text-center">
-      <p className="text-xs text-neutral-500 sm:text-sm">Posisi alternatifmu</p>
+      <p className="text-xs text-neutral-500 sm:text-sm">{t.results.alternativePosition.label}</p>
       <h2 className="text-2xl font-semibold leading-tight text-neutral-900 sm:text-3xl">
         {POSITION_ENGLISH_NAMES[positionScore.position]}
       </h2>

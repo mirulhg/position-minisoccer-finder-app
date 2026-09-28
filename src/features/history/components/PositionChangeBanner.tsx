@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { useTranslation } from '../../../i18n';
 import { supabase } from '../../../lib/supabase';
 import { useAuthSession } from '../../auth';
 import {
@@ -11,6 +12,7 @@ import {
 
 /** FR-16 — banner in-app, dipasang di ResultsScreen dan HistoryScreen (PRD: "saat pengguna membuka kembali"). */
 export function PositionChangeBanner() {
+  const { t } = useTranslation();
   const { session } = useAuthSession();
   const [notification, setNotification] = useState<PositionChangeNotification | null>(null);
 
@@ -38,11 +40,12 @@ export function PositionChangeBanner() {
   return (
     <Card className="border-primary-300 bg-primary-50">
       <p className="text-sm text-primary-800">
-        Posisi utamamu berubah jadi <span className="font-semibold">{notification.positionName}</span> setelah
-        pertandingan terbaru.
+        {t.results.positionChangeBanner.messageBefore}
+        <span className="font-semibold">{notification.positionName}</span>
+        {t.results.positionChangeBanner.messageAfter}
       </p>
       <Button variant="ghost" onClick={handleDismiss} className="mt-2 w-full">
-        Mengerti
+        {t.results.positionChangeBanner.acknowledge}
       </Button>
     </Card>
   );

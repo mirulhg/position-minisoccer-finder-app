@@ -1,5 +1,6 @@
 import { ChoiceCard } from '../../../components/ui/ChoiceCard';
 import { NumberStepper } from '../../../components/ui/NumberStepper';
+import { useLocalizedQuestion, useTranslation } from '../../../i18n';
 import type { AnswerValue, Question } from '../types';
 
 interface QuestionCardProps {
@@ -8,16 +9,17 @@ interface QuestionCardProps {
   onChange: (value: AnswerValue) => void;
 }
 
-const LIKERT_LABELS = ['Hampir tidak pernah', 'Jarang', 'Kadang-kadang', 'Sering', 'Hampir selalu'] as const;
+export function QuestionCard({ question: questionProp, value, onChange }: QuestionCardProps) {
+  const { t } = useTranslation();
+  const question = useLocalizedQuestion(questionProp);
 
-export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-lg leading-snug text-neutral-900">{question.text}</p>
 
       {(question.type === 'L' || question.type === 'C') && (
         <div className="flex flex-col gap-2">
-          {LIKERT_LABELS.map((label, index) => {
+          {t.questionnaire.likertLabels.map((label, index) => {
             const optionValue = index + 1;
             return (
               <ChoiceCard key={optionValue} selected={value === optionValue} onSelect={() => onChange(optionValue)}>
@@ -30,7 +32,7 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
 
       {question.type === 'F' && (
         <NumberStepper
-          label="Berapa kali per pertandingan?"
+          label={t.questionnaire.frequencyLabel}
           value={typeof value === 'number' ? value : 0}
           onChange={onChange}
         />
@@ -42,7 +44,7 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
             {question.leftLabel}
           </ChoiceCard>
           <ChoiceCard selected={value === 'situational'} onSelect={() => onChange('situational')}>
-            Tergantung situasi
+            {t.questionnaire.tradeOffSituational}
           </ChoiceCard>
           <ChoiceCard selected={value === 'right'} onSelect={() => onChange('right')}>
             {question.rightLabel}

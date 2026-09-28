@@ -2,6 +2,7 @@ import { Suspense, useState, useTransition } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Card } from '../../../components/ui/Card';
 import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
+import { useTranslation } from '../../../i18n';
 import type { RoleScore } from '../../scoring';
 import { RoleCard } from './RoleCard';
 
@@ -16,8 +17,10 @@ interface RoleTabsSectionProps {
 const ROLE_GRID_CLASSNAME = 'grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6';
 
 function RoleCardGrid({ roles }: { roles: RoleScore[] }) {
+  const { t } = useTranslation();
+
   if (roles.length === 0) {
-    return <p className="text-sm text-neutral-500">Belum ada role kandidat untuk posisi ini.</p>;
+    return <p className="text-sm text-neutral-500">{t.results.roleTabs.empty}</p>;
   }
 
   return (
@@ -31,11 +34,12 @@ function RoleCardGrid({ roles }: { roles: RoleScore[] }) {
 
 /** Placeholder Suspense — meniru bentuk `RoleCard` (badge + skor + deskripsi). */
 function RoleCardSkeleton() {
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
 
   return (
     <div className={`${ROLE_GRID_CLASSNAME} ${shouldReduceMotion ? '' : 'animate-pulse'}`} role="status">
-      <span className="sr-only">Memuat role…</span>
+      <span className="sr-only">{t.results.roleTabs.loading}</span>
       {Array.from({ length: 2 }, (_, index) => (
         <Card key={index}>
           <div className="flex items-baseline justify-between gap-2">
@@ -82,6 +86,7 @@ function TabButton({ label, isActive, onClick }: TabButtonProps) {
  * dan grid role posisi utama tampil apa adanya seperti sebelum tab ini ada.
  */
 export function RoleTabsSection({ mainRoles, alternativeRoles, hasAlternative }: RoleTabsSectionProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<PositionTab>('main');
   const [isPending, startTransition] = useTransition();
   const shouldReduceMotion = useReducedMotion();
@@ -100,9 +105,9 @@ export function RoleTabsSection({ mainRoles, alternativeRoles, hasAlternative }:
     <div className="flex flex-col gap-4">
       <div className="flex justify-center">
         <div role="tablist" className="inline-flex gap-1 rounded-full bg-neutral-100 p-1">
-          <TabButton label="Posisi Utama" isActive={activeTab === 'main'} onClick={() => selectTab('main')} />
+          <TabButton label={t.results.roleTabs.main} isActive={activeTab === 'main'} onClick={() => selectTab('main')} />
           <TabButton
-            label="Posisi Alternatif"
+            label={t.results.roleTabs.alternative}
             isActive={activeTab === 'alternative'}
             onClick={() => selectTab('alternative')}
           />

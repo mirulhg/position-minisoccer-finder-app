@@ -19,6 +19,19 @@ export interface ProfileCardData {
   topAttributes: { label: string; value: number }[];
 }
 
+/**
+ * Label yang digambar di dalam kartu (Canvas biasa, bukan React component —
+ * tidak bisa panggil `useTranslation()` langsung di sini). Pemanggil
+ * (ResultActions.tsx, yang sudah punya `t` dari `useTranslation()`) mengirim
+ * `t.results.profileCard` sebagai argumen ini.
+ */
+export interface ProfileCardStrings {
+  mainPositionLabel: string;
+  alternativePositionLabel: string;
+  alternativeRolesSectionLabel: string;
+  topAttributesSectionLabel: string;
+}
+
 const CARD_WIDTH = 1080;
 
 // CARD_HEIGHT dihitung dinamis di drawProfileCard (bukan konstanta tetap)
@@ -348,7 +361,7 @@ function drawFooter(ctx: CanvasRenderingContext2D, footerY: number): void {
 }
 
 /** FR-18 — kartu profil untuk dibagikan (lebar tetap 1080, tinggi menyesuaikan konten — lebih tinggi kalau ada section role posisi alternatif). Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
-export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData): void {
+export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData, strings: ProfileCardStrings): void {
   const hasAlternativeRoles = data.alternativePosition !== null && data.alternativeRoles.length > 0;
 
   // Hitung tinggi kartu di muka (bukan sambil menggambar) — mengeset
@@ -388,7 +401,7 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
 
   drawPositionColumn(
     ctx,
-    { label: 'Posisi utama', name: data.positionName, position: data.position, score: data.positionScore },
+    { label: strings.mainPositionLabel, name: data.positionName, position: data.position, score: data.positionScore },
     CARD_SIDE_MARGIN,
   );
 
@@ -396,7 +409,7 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
     drawPositionColumn(
       ctx,
       {
-        label: 'Posisi alternatif',
+        label: strings.alternativePositionLabel,
         name: data.alternativePosition.name,
         position: data.alternativePosition.position,
         score: data.alternativePosition.score,
@@ -410,13 +423,13 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
   if (hasAlternativeRoles) {
     ctx.fillStyle = COLOR_TEXT_MUTED;
     ctx.font = `400 34px ${FONT_FAMILY}`;
-    ctx.fillText('Role terbaik — Posisi Alternatif', CARD_SIDE_MARGIN, altRoleLabelY);
+    ctx.fillText(strings.alternativeRolesSectionLabel, CARD_SIDE_MARGIN, altRoleLabelY);
     drawRoleList(ctx, data.alternativeRoles, altRoleListStartY);
   }
 
   ctx.fillStyle = COLOR_TEXT_MUTED;
   ctx.font = `400 34px ${FONT_FAMILY}`;
-  ctx.fillText('Kekuatan utama', 60, kekuatanLabelY);
+  ctx.fillText(strings.topAttributesSectionLabel, 60, kekuatanLabelY);
 
   let y = attrStartY;
   for (const attribute of data.topAttributes) {

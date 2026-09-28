@@ -45,6 +45,40 @@ export const ATTRIBUTE_LABELS: Record<FieldAttributeCode | GoalkeeperAttributeCo
   'GK-CMD': 'Menguasai Kotak',
 };
 
+/** Versi Inggris `ATTRIBUTE_LABELS` — dipakai lewat `useLocalizedAttributeLabel` (src/i18n), tidak menggantikan default Indonesia. */
+export const ATTRIBUTE_LABELS_EN: Record<FieldAttributeCode | GoalkeeperAttributeCode, string> = {
+  PAC: 'Top Speed',
+  ACC: 'Acceleration',
+  STA: 'Stamina',
+  STR: 'Body Strength',
+  AGI: 'Agility',
+  JMP: 'Aerial Reach',
+  FTC: 'First Touch',
+  DRB: 'Dribbling',
+  PSS: 'Short Passing',
+  LPS: 'Long & Through Passing',
+  FIN: 'Finishing',
+  LSH: 'Long Shots',
+  CRS: 'Crossing',
+  WFT: 'Weak Foot',
+  OPS: 'Attacking Positioning',
+  DPS: 'Defensive Positioning',
+  VIS: 'Vision & Decision Making',
+  PRS: 'Pressing Intensity',
+  WRK: 'Two-Way Work Rate',
+  TKL: 'Tackling & Interceptions',
+  AER: 'Aerial Duels',
+  ANT: 'Anticipation',
+  CMP: 'Composure',
+  AGG: 'Aggression',
+  LDR: 'Communication',
+  'GK-REF': 'Reflexes',
+  'GK-POS': 'Positioning',
+  'GK-DIS': 'Distribution',
+  'GK-SWP': 'Sweeping',
+  'GK-CMD': 'Commanding the Box',
+};
+
 /** Lima pilar untuk radar hasil (FR-12) dan deteksi jawaban tidak konsisten. */
 export const ATTRIBUTE_PILLARS: Record<FieldAttributeCode, Pillar> = {
   PAC: 'Fisik', ACC: 'Fisik', STA: 'Fisik', STR: 'Fisik', AGI: 'Fisik', JMP: 'Fisik',
@@ -55,3 +89,12 @@ export const ATTRIBUTE_PILLARS: Record<FieldAttributeCode, Pillar> = {
 };
 
 export const PILLARS: readonly Pillar[] = ['Fisik', 'Teknik', 'Taktik', 'Duel', 'Mental'];
+
+/** Versi Inggris nama pilar — `Pillar` sendiri tetap dalam Bahasa Indonesia (dipakai sebagai key di seluruh pipeline scoring). */
+export const PILLAR_LABELS_EN: Record<Pillar, string> = {
+  Fisik: 'Physical',
+  Teknik: 'Technique',
+  Taktik: 'Tactics',
+  Duel: 'Duels',
+  Mental: 'Mental',
+};

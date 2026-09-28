@@ -6,6 +6,7 @@ import {
   COLLAPSIBLE_TRANSITION,
   COLLAPSIBLE_VISIBLE,
 } from '../../../components/ui/collapsible-motion';
+import { useTranslation } from '../../../i18n';
 import { ROLE_METADATA, type RoleScore } from '../../scoring';
 
 interface AllRolesListProps {
@@ -41,6 +42,7 @@ function LockIcon() {
  * Motion — buka/tutupnya dikontrol browser, bukan unmount React).
  */
 export function AllRolesList({ roleScores }: AllRolesListProps) {
+  const { t } = useTranslation();
   const sorted = [...roleScores].sort((a, b) => b.fit - a.fit);
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -55,7 +57,7 @@ export function AllRolesList({ roleScores }: AllRolesListProps) {
         aria-controls={listId}
         className="flex min-h-touch w-full items-center gap-1 rounded-md px-4 py-3 text-sm font-medium text-neutral-700"
       >
-        Lihat semua role
+        {t.results.allRoles.toggle}
         <motion.span animate={{ rotate: isExpanded ? 90 : 0 }} transition={CHEVRON_TRANSITION} aria-hidden="true">
           ▸
         </motion.span>
@@ -84,7 +86,7 @@ export function AllRolesList({ roleScores }: AllRolesListProps) {
                       {isLocked && (
                         <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600">
                           <LockIcon />
-                          Syarat belum terpenuhi
+                          {t.results.allRoles.gateNotMet}
                         </span>
                       )}
                       <span className="text-sm font-semibold text-neutral-900">{Math.round(score.fit)}</span>

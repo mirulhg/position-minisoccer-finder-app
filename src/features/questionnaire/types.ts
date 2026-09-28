@@ -11,6 +11,16 @@ export const BLOCK_NAMES: Record<QuestionBlock, string> = {
   6: 'Kiper',
 };
 
+/** Versi Inggris `BLOCK_NAMES` — dipakai lewat `useLocalizedBlockName` (src/i18n), tidak menggantikan default Indonesia. */
+export const BLOCK_NAMES_EN: Record<QuestionBlock, string> = {
+  1: 'Physical',
+  2: 'Attacking',
+  3: 'Defending',
+  4: 'Technique',
+  5: 'Mental',
+  6: 'Goalkeeper',
+};
+
 export interface AttributeContribution {
   attribute: AttributeCode;
   weight: number;

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
+import { useTranslation } from '../../../i18n';
 import { useAuthSession } from '../../auth';
 import { drawProfileCard, shareProfileCard, type ProfileCardData } from '../lib/profile-card-canvas';
 
@@ -16,6 +17,7 @@ interface ResultActionsProps {
  * dan menyimpan hasil (lihat `SaveResultSection`).
  */
 export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
+  const { t } = useTranslation();
   const { session } = useAuthSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -28,10 +30,10 @@ export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
     setError(null);
     setIsSharing(true);
     try {
-      drawProfileCard(canvas, cardData);
+      drawProfileCard(canvas, cardData, t.results.profileCard);
       await shareProfileCard(canvas, 'kartu-profil-minisoccer.png');
     } catch (shareError) {
-      setError(shareError instanceof Error ? shareError.message : 'Gagal membagikan kartu profil.');
+      setError(shareError instanceof Error ? shareError.message : t.results.resultActions.shareCardError);
     } finally {
       setIsSharing(false);
     }
@@ -41,7 +43,7 @@ export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
     <div className="flex flex-col gap-2">
       <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
       <Button variant="secondary" onClick={handleShare} disabled={isSharing} className="w-full">
-        {isSharing ? 'Menyiapkan kartu…' : 'Bagikan kartu profil'}
+        {isSharing ? t.results.resultActions.preparingCard : t.results.resultActions.shareCard}
       </Button>
       {error && (
         <p role="alert" className="text-sm text-danger-600">
@@ -50,11 +52,16 @@ export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
       )}
       {session ? (
         <Button variant="secondary" onClick={onLogMatch} className="w-full">
-          Catat pertandingan
+          {t.results.resultActions.logMatch}
         </Button>
       ) : (
-        <Button variant="secondary" disabled className="w-full" title="Simpan hasil dulu untuk mencatat pertandingan">
-          Catat pertandingan — simpan hasil dulu
+        <Button
+          variant="secondary"
+          disabled
+          className="w-full"
+          title={t.results.resultActions.logMatchDisabledTitle}
+        >
+          {t.results.resultActions.logMatchDisabledLabel}
         </Button>
       )}
     </div>

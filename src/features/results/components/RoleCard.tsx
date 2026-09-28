@@ -9,6 +9,7 @@ import {
 } from '../../../components/ui/collapsible-motion';
 import { PositionBadge } from '../../../components/ui/PositionBadge';
 import { RoleBadge } from '../../../components/ui/RoleBadge';
+import { useLocalizedRoleMetadata, useTranslation } from '../../../i18n';
 import { ROLE_METADATA, type RoleScore } from '../../scoring';
 import { AnimatedScore } from './AnimatedScore';
 
@@ -17,7 +18,9 @@ interface RoleCardProps {
 }
 
 export function RoleCard({ roleScore }: RoleCardProps) {
+  const { t } = useTranslation();
   const metadata = ROLE_METADATA[roleScore.role];
+  const localizedMetadata = useLocalizedRoleMetadata(roleScore.role);
   const fit = Math.round(roleScore.fit);
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -35,7 +38,7 @@ export function RoleCard({ roleScore }: RoleCardProps) {
         <PositionBadge position={metadata.position} />
         <RoleBadge role={roleScore.role} />
       </div>
-      <p className="mt-2 text-sm text-neutral-600">{metadata.description}</p>
+      <p className="mt-2 text-sm text-neutral-600">{localizedMetadata.description}</p>
 
       <button
         type="button"
@@ -43,7 +46,7 @@ export function RoleCard({ roleScore }: RoleCardProps) {
         aria-expanded={isExpanded}
         className="mt-2 flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-700"
       >
-        {isExpanded ? 'Sembunyikan detail' : 'Ketuk untuk detail'}
+        {isExpanded ? t.results.roleCard.hideDetail : t.results.roleCard.showDetail}
         <motion.span animate={{ rotate: isExpanded ? 180 : 0 }} transition={CHEVRON_TRANSITION} aria-hidden="true">
           ▾
         </motion.span>
@@ -60,7 +63,8 @@ export function RoleCard({ roleScore }: RoleCardProps) {
             transition={COLLAPSIBLE_TRANSITION}
           >
             <p className="mt-2 text-xs text-neutral-500">
-              <span className="font-medium text-neutral-600">Gaya main mirip:</span> {metadata.proExample}
+              <span className="font-medium text-neutral-600">{t.results.roleCard.playStyleLike}</span>{' '}
+              {localizedMetadata.proExample}
             </p>
           </motion.div>
         )}

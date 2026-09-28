@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
+import { getLocalizedAttributeLabel, useTranslation } from '../../../i18n';
 import { trackEvent } from '../../../lib/analytics';
 import { deriveDisplayName, useAuthSession } from '../../auth';
 import { PositionChangeBanner } from '../../history';
 import type { AnswerValue } from '../../questionnaire';
 import {
-  ATTRIBUTE_LABELS,
   POSITION_ENGLISH_NAMES,
   ROLE_METADATA,
   computePillarAverages,
@@ -54,6 +54,7 @@ export function ResultsScreen({
   onLogMatch,
 }: ResultsScreenProps) {
   const { session } = useAuthSession();
+  const { t, language } = useTranslation();
 
   const result = useMemo(() => {
     const input = buildScoringInput(answers, physical, usualPosition, willingGoalkeeper);
@@ -91,10 +92,10 @@ export function ResultsScreen({
   const cardData = useMemo(() => {
     const topAttributes = rankAttributesDescending(result.attributes)
       .slice(0, 3)
-      .map(([attribute, value]) => ({ label: ATTRIBUTE_LABELS[attribute], value }));
+      .map(([attribute, value]) => ({ label: getLocalizedAttributeLabel(attribute, language), value }));
 
     return {
-      displayName: session ? deriveDisplayName(session.user) : 'Pemain Minisoccer',
+      displayName: session ? deriveDisplayName(session.user) : t.results.profileCard.defaultDisplayName,
       positionName: POSITION_ENGLISH_NAMES[result.mainPosition.position],
       positionScore: result.mainPosition.score,
       position: result.mainPosition.position,
@@ -117,7 +118,7 @@ export function ResultsScreen({
       })),
       topAttributes,
     };
-  }, [result, session, topRolesInMainPosition, topRolesInAlternativePosition, alternativePosition]);
+  }, [result, session, topRolesInMainPosition, topRolesInAlternativePosition, alternativePosition, language, t]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 md:grid md:grid-cols-2 md:gap-6">

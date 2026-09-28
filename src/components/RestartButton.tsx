@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from './ui/Button';
 import { signOut } from '../features/auth';
+import { useTranslation } from '../i18n';
 import { dbClear } from '../lib/db';
 import { supabase } from '../lib/supabase';
 import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from './ui/dialog-motion';
@@ -22,6 +23,7 @@ interface RestartButtonProps {
  * dibersihkan di sini).
  */
 export function RestartButton({ onRestart }: RestartButtonProps) {
+  const { t } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -51,11 +53,7 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
           exit={shouldReduceMotion ? undefined : DIALOG_HIDDEN}
           transition={DIALOG_TRANSITION}
         >
-          <p className="max-w-xs text-sm text-neutral-600">
-            Yakin? Jawaban lokal akan dihapus. Ini hanya menghapus data kuesioner
-            di perangkat ini — kalau kamu sudah menyimpan hasil ke akun, data di
-            akunmu tidak ikut terhapus.
-          </p>
+          <p className="max-w-xs text-sm text-neutral-600">{t.common.restart.confirmMessage}</p>
           <div className="flex gap-3">
             <button
               type="button"
@@ -63,7 +61,7 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
               disabled={isClearing}
               className="min-h-touch min-w-touch rounded-md border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300"
             >
-              Batal
+              {t.common.restart.cancel}
             </button>
             <button
               type="button"
@@ -71,7 +69,7 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
               disabled={isClearing}
               className="min-h-touch min-w-touch rounded-md bg-danger-600 px-4 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
             >
-              {isClearing ? 'Menghapus…' : 'Ya, hapus'}
+              {isClearing ? t.common.restart.confirming : t.common.restart.confirm}
             </button>
           </div>
         </motion.div>
@@ -85,7 +83,7 @@ export function RestartButton({ onRestart }: RestartButtonProps) {
           transition={DIALOG_TRANSITION}
         >
           <Button variant="ghost" onClick={() => setIsConfirming(true)} className="text-sm">
-            Mulai ulang dari awal
+            {t.common.restart.trigger}
           </Button>
         </motion.div>
       )}

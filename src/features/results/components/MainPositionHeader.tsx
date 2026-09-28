@@ -1,4 +1,5 @@
 import { PositionCodeBadge } from '../../../components/ui/PositionBadge';
+import { useTranslation } from '../../../i18n';
 import { POSITION_ENGLISH_NAMES, type ConfidenceLabel, type PositionScore } from '../../scoring';
 import { AnimatedScore } from './AnimatedScore';
 
@@ -7,12 +8,19 @@ interface MainPositionHeaderProps {
   confidenceLabel: ConfidenceLabel;
 }
 
+const CONFIDENCE_LABEL_KEY: Record<ConfidenceLabel, 'early' | 'moderate' | 'solid'> = {
+  Awal: 'early',
+  Cukup: 'moderate',
+  Solid: 'solid',
+};
+
 export function MainPositionHeader({ positionScore, confidenceLabel }: MainPositionHeaderProps) {
+  const { t } = useTranslation();
   const score = Math.round(positionScore.score);
 
   return (
     <div className="flex flex-col items-center gap-2 text-center">
-      <p className="text-xs text-neutral-500 sm:text-sm">Posisi utamamu</p>
+      <p className="text-xs text-neutral-500 sm:text-sm">{t.results.mainPosition.label}</p>
       <h1 className="text-2xl font-semibold leading-tight text-neutral-900 sm:text-3xl">
         {POSITION_ENGLISH_NAMES[positionScore.position]}
       </h1>
@@ -23,7 +31,8 @@ export function MainPositionHeader({ positionScore, confidenceLabel }: MainPosit
           <span className="sr-only">{score}</span>
         </span>
         <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600">
-          Confidence: {confidenceLabel}
+          {t.results.confidence.prefix}
+          {t.results.confidence[CONFIDENCE_LABEL_KEY[confidenceLabel]]}
         </span>
       </div>
     </div>

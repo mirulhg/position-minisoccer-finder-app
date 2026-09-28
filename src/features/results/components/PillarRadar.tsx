@@ -1,6 +1,8 @@
 import { motion, useReducedMotion } from 'motion/react';
+import { useTranslation } from '../../../i18n';
 import { PILLARS, type Pillar } from '../../scoring';
 import { PILLAR_ICON_PATHS } from '../config/pillar-icons';
+import { PillarLabel } from './PillarLabel';
 
 interface PillarRadarProps {
   values: Record<Pillar, number>;
@@ -37,11 +39,12 @@ const ICON_STAGGER_INTERVAL = 0.08;
 
 /** Radar 5 pilar — SVG buatan tangan, tanpa library chart (PRD Lampiran C.6). */
 export function PillarRadar({ values }: PillarRadarProps) {
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
   const valueRadii = PILLARS.map((pillar) => (Math.max(0, Math.min(100, values[pillar])) / 100) * MAX_RADIUS);
 
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full max-w-xs" role="img" aria-label="Radar lima pilar atribut">
+    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full max-w-xs" role="img" aria-label={t.results.pillarRadar.ariaLabel}>
       <motion.g
         initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -93,7 +96,7 @@ export function PillarRadar({ values }: PillarRadarProps) {
             transition={{ duration: 0.35, ease: 'easeOut', delay: SHAPE_DELAY + index * ICON_STAGGER_INTERVAL }}
           >
             <title>
-              {pillar} ({Math.round(values[pillar])})
+              <PillarLabel pillar={pillar} /> ({Math.round(values[pillar])})
             </title>
           </motion.image>
         );

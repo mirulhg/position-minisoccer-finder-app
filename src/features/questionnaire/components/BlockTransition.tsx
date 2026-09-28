@@ -1,8 +1,8 @@
 import { motion, useReducedMotion, type Variants } from 'motion/react';
 import { Button } from '../../../components/ui/Button';
+import { useLocalizedBlockName, useTranslation } from '../../../i18n';
 import { BLOCK_ICON_PATHS } from '../config/block-icons';
 import type { QuestionBlock } from '../types';
-import { BLOCK_NAMES } from '../types';
 
 interface BlockTransitionProps {
   block: QuestionBlock;
@@ -33,6 +33,8 @@ const NAME_VARIANTS: Variants = {
 const BUTTON_VARIANTS: Variants = NAME_VARIANTS;
 
 export function BlockTransition({ block, onContinue }: BlockTransitionProps) {
+  const { t } = useTranslation();
+  const blockName = useLocalizedBlockName(block);
   const iconPath = BLOCK_ICON_PATHS[block];
   const shouldReduceMotion = useReducedMotion();
 
@@ -45,14 +47,14 @@ export function BlockTransition({ block, onContinue }: BlockTransitionProps) {
       exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.98, transition: { duration: 0.18, ease: 'easeOut' } }}
     >
       <motion.p variants={LABEL_VARIANTS} className="text-sm font-medium text-neutral-400">
-        Blok berikutnya
+        {t.questionnaire.nextBlockLabel}
       </motion.p>
       {iconPath && <motion.img variants={ICON_VARIANTS} src={iconPath} alt="" className="h-16 w-16" />}
       <motion.h2 variants={NAME_VARIANTS} className="text-3xl font-semibold text-neutral-900">
-        {BLOCK_NAMES[block]}
+        {blockName}
       </motion.h2>
       <motion.div variants={BUTTON_VARIANTS}>
-        <Button onClick={onContinue}>Lanjut</Button>
+        <Button onClick={onContinue}>{t.common.next}</Button>
       </motion.div>
     </motion.div>
   );

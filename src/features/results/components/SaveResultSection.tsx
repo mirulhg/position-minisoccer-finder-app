@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
+import { useTranslation } from '../../../i18n';
 import { dbGet, markSynced } from '../../../lib/db';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 import { ACCOUNT_LOGIN_ENABLED, deriveDisplayName, LoginForm, migrateLocalProfileToSupabase, useAuthSession } from '../../auth';
@@ -38,6 +39,7 @@ type MigrationState = 'idle' | 'migrating' | 'done' | 'error';
  * menekan "Ya, simpan ke akun ini".
  */
 export function SaveResultSection({ profile, scoringResult, onViewHistory }: SaveResultSectionProps) {
+  const { t } = useTranslation();
   const { session, isLoading: isSessionLoading } = useAuthSession();
   const shouldReduceMotion = useReducedMotion();
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -108,7 +110,7 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
         .eq('player_id', userId)
         .limit(1);
       if (existingProfilesError) {
-        throw new Error(`Gagal memeriksa riwayat profil: ${existingProfilesError.message}`);
+        throw new Error(t.results.saveResult.checkHistoryError(existingProfilesError.message));
       }
 
       if (existingProfiles && existingProfiles.length > 0) {
@@ -126,7 +128,7 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
       setMigrationState('done');
     } catch (error) {
       setMigrationState('error');
-      setMigrationError(error instanceof Error ? error.message : 'Gagal menyimpan hasil.');
+      setMigrationError(error instanceof Error ? error.message : t.results.saveResult.defaultSaveError);
     }
   }
 
@@ -158,12 +160,10 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     contentKey = 'migration-done';
     content = (
       <Card>
-        <p className="text-sm font-medium text-primary-700">Tersimpan ke akunmu</p>
-        <p className="mt-1 text-sm text-neutral-600">
-          Riwayat akan bertambah setelah kamu mengulang tes atau mencatat pertandingan.
-        </p>
+        <p className="text-sm font-medium text-primary-700">{t.results.saveResult.savedTitle}</p>
+        <p className="mt-1 text-sm text-neutral-600">{t.results.saveResult.savedDescription}</p>
         <Button variant="ghost" onClick={onViewHistory} className="mt-2 w-full">
-          Lihat riwayat
+          {t.results.saveResult.viewHistory}
         </Button>
       </Card>
     );
@@ -171,7 +171,7 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     contentKey = 'migration-progress';
     content = (
       <Card>
-        <p className="text-sm text-neutral-600">Menyimpan hasil ke akunmu…</p>
+        <p className="text-sm text-neutral-600">{t.results.saveResult.saving}</p>
       </Card>
     );
   } else if (migrationState === 'error') {
@@ -188,15 +188,18 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     content = (
       <Card>
         <p className="text-sm text-neutral-700">
-          Simpan ke akunmu? Kamu sedang masuk sebagai{' '}
-          <span className="font-medium text-neutral-900">{session.user.email ?? 'akun ini'}</span>.
+          {t.results.saveResult.confirmPrefix}{' '}
+          <span className="font-medium text-neutral-900">
+            {session.user.email ?? t.results.saveResult.confirmFallbackAccount}
+          </span>
+          .
         </p>
         <div className="mt-3 flex gap-3">
           <Button variant="ghost" onClick={handleSkipSave} className="flex-1">
-            Bukan saya
+            {t.results.saveResult.notMe}
           </Button>
           <Button variant="secondary" onClick={handleConfirmSave} className="flex-1">
-            Ya, simpan ke akun ini
+            {t.results.saveResult.confirmSave}
           </Button>
         </div>
       </Card>
@@ -207,7 +210,7 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     contentKey = 'email-sent';
     content = (
       <Card>
-        <p className="text-sm text-neutral-700">Cek email kamu — tautan masuk sudah dikirim.</p>
+        <p className="text-sm text-neutral-700">{t.results.saveResult.emailSent}</p>
       </Card>
     );
   } else if (showLoginForm) {
@@ -222,16 +225,16 @@ export function SaveResultSection({ profile, scoringResult, onViewHistory }: Sav
     content = (
       <div className="flex flex-col items-center gap-1 text-center">
         <Button variant="secondary" disabled className="w-full">
-          Simpan hasil ini
+          {t.results.saveResult.saveDisabledLabel}
         </Button>
-        <p className="text-xs text-neutral-500">Segera hadir — fitur akun sedang disempurnakan keamanannya.</p>
+        <p className="text-xs text-neutral-500">{t.results.saveResult.saveComingSoon}</p>
       </div>
     );
   } else {
     contentKey = 'login-cta';
     content = (
       <Button variant="secondary" onClick={() => setShowLoginForm(true)} className="w-full">
-        Simpan hasil ini
+        {t.results.saveResult.saveCta}
       </Button>
     );
   }
