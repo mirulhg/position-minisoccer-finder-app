@@ -12,6 +12,43 @@ Urutan: terbaru di atas. Tanggal mengikuti yang tercatat di catatan asli
 (hasil verifikasi baca-kode langsung, bukan tanggal commit git yang sebenarnya
 — kalau mau presisi, cocokkan dengan `git log`).
 
+## 2026-09-28 — Dukungan Bahasa Inggris (i18n): Layar Hasil, Kuesioner, kartu profil PNG (v0.2.0)
+
+Infrastruktur i18n dari nol di `src/i18n/` — dictionary manual type-safe
+(`Dictionary` interface, `id.ts`/`en.ts` yang HARUS mengimplementasikannya
+persis, jadi TypeScript gagal compile kalau satu bahasa kehilangan key),
+`LanguageContext` (persist `localStorage['pmf-language']`, auto-detect
+`navigator.language` kalau belum ada nilai tersimpan), dan helper lokalisasi
+data domain (`useLocalizedAttributeLabel`, `useLocalizedRoleMetadata`,
+`useLocalizedPillarLabel`, `useLocalizedBlockName`, `useLocalizedQuestion`) —
+tidak pakai library i18n eksternal (bukan i18next/react-intl). Sengaja
+dikerjakan dua tahap dalam satu sesi kerja berkelanjutan (digabung jadi satu
+commit, `4db1015` — lihat alasan di pesan commit):
+
+- **Layar Hasil**: semua sub-komponen (`MainPositionHeader`,
+  `AlternativePosition`, `RoleTabsSection`/`RoleCard`, `AllRolesList`,
+  `WhyBlock`, `PillarRadar`/`PillarBreakdown`, `ResultActions`,
+  `SaveResultSection`, `PositionChangeBanner`) + switch bahasa ("ID"/"EN")
+  di `AppFooter`, gaya pill mengikuti `TabButton`.
+- **Kuesioner**: seluruh 50 pertanyaan (`QUESTION_BANK_EN`, di-key per id
+  Q01-Q50, pola sama seperti `ROLE_METADATA_EN`), label skala Likert,
+  frequency, trade-off, transisi antar-blok (termasuk nama blok), progress
+  bar, dan `RestartButton` (celah yang terlewat waktu Layar Hasil
+  dikerjakan — sekarang konsisten di kedua tempat pemakaiannya).
+- **Kartu profil PNG** (`profile-card-canvas.ts`): label kolom
+  posisi/section role/atribut sekarang diterima lewat parameter
+  `ProfileCardStrings` dari pemanggil (`ResultActions.tsx`), bukan
+  hardcoded — header band ("Position & Role Finder Minisoccer") dan footer
+  kredit developer sengaja TIDAK ikut diterjemahkan.
+- **Belum dikerjakan** (fase terpisah berikutnya): Onboarding, Akun,
+  Riwayat, Match Input — tetap Bahasa Indonesia walau `language` di-set
+  Inggris.
+- Divalidasi manual (Playwright headless): kuesioner penuh ID & EN
+  (termasuk Blok Kiper), kartu profil PNG kedua bahasa (ID persis sama
+  seperti sebelumnya, EN tidak ada teks terpotong), dan percobaan sengaja
+  menghapus satu entri dari `QUESTION_BANK_EN` untuk membuktikan fallback
+  runtime-nya (kembali ke teks Indonesia + `console.warn`, bukan crash).
+
 ## 2026-09-24 — Perapian besar-besaran badge posisi/role & kartu profil
 
 Rangkaian revisi cepat berdasarkan review visual Amirul terhadap hasil

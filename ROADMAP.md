@@ -20,11 +20,14 @@ scope lebih lanjut sebelum dieksekusi.
   menyimpan/menandai hasil kuesioner, tanpa proses login/autentikasi.
   Belum ada keputusan field apa saja yang termasuk "identitas sederhana"
   (nama saja? nama + sesuatu lain?).
-- **Versi Bahasa Inggris (i18n)** — UI aplikasi saat ini seluruhnya
-  Bahasa Indonesia (mis. "Rincian pilar", "Fisik", "Teknik", "Taktik",
-  "Duel", "Mental"). Belum ada keputusan pendekatan i18n (library seperti
-  i18next/react-intl vs. dictionary manual sederhana), default bahasa, dan
-  cara switch bahasa ditampilkan ke pengguna.
+- **Versi Bahasa Inggris (i18n)** — **sebagian sudah dikerjakan** (lihat
+  `CHANGELOG.md` 2026-09-28): infrastruktur `src/i18n/` (dictionary manual
+  type-safe + Context, bukan library eksternal), switch ID/EN di
+  `AppFooter`, dan penerjemahan penuh Layar Hasil, Kuesioner (50
+  pertanyaan), `RestartButton`, dan label kartu profil PNG. **Belum
+  dikerjakan**: layar Onboarding, Akun, Riwayat, dan Match Input — masih
+  Bahasa Indonesia terlepas dari `language` aktif (perilaku disengaja untuk
+  fase ini, bukan bug).
 
 ## Ide tercatat, belum jadi prioritas
 
