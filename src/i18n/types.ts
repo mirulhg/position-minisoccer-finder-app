@@ -120,6 +120,18 @@ export interface Dictionary {
       topAttributesSectionLabel: string;
       /** Fallback `displayName` kalau belum login — dipakai di ResultsScreen saat membangun `cardData`. */
       defaultDisplayName: string;
+      /** Form singkat yang muncul sebelum kartu dibagikan (nama & nomor punggung, keduanya opsional). */
+      shareForm: {
+        title: string;
+        subtitle: string;
+        nameLabel: string;
+        namePlaceholder: string;
+        jerseyNumberLabel: string;
+        jerseyNumberHint: string;
+        jerseyNumberInvalid: string;
+        skip: string;
+        share: string;
+      };
     };
   };
 }

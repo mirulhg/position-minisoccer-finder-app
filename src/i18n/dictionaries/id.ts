@@ -97,6 +97,17 @@ export const id: Dictionary = {
       alternativeRolesSectionLabel: 'Role terbaik — Posisi Alternatif',
       topAttributesSectionLabel: 'Kekuatan utama',
       defaultDisplayName: 'Pemain Minisoccer',
+      shareForm: {
+        title: 'Personalisasi kartu',
+        subtitle: 'Boleh dikosongkan — kartu tetap bisa dibagikan.',
+        nameLabel: 'Nama',
+        namePlaceholder: 'mis. Rizky',
+        jerseyNumberLabel: 'Nomor punggung favorit',
+        jerseyNumberHint: 'Angka 1-99',
+        jerseyNumberInvalid: 'Isi angka bulat 1 sampai 99, atau kosongkan.',
+        skip: 'Lewati',
+        share: 'Bagikan',
+      },
     },
   },
 };

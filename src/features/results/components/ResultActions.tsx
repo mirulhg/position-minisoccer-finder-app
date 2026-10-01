@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Button } from '../../../components/ui/Button';
+import { DIALOG_HIDDEN, DIALOG_TRANSITION, DIALOG_VISIBLE } from '../../../components/ui/dialog-motion';
 import { useTranslation } from '../../../i18n';
 import { useAuthSession } from '../../auth';
 import { drawProfileCard, shareProfileCard, type ProfileCardData } from '../lib/profile-card-canvas';
+import { ShareCardForm } from './ShareCardForm';
 
 interface ResultActionsProps {
   cardData: ProfileCardData;
@@ -22,15 +25,17 @@ export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
-  async function handleShare() {
+  async function handleShare(data: ProfileCardData) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     setError(null);
     setIsSharing(true);
     try {
-      drawProfileCard(canvas, cardData, t.results.profileCard);
+      drawProfileCard(canvas, data, t.results.profileCard);
       await shareProfileCard(canvas, 'kartu-profil-minisoccer.png');
     } catch (shareError) {
       setError(shareError instanceof Error ? shareError.message : t.results.resultActions.shareCardError);
@@ -39,12 +44,37 @@ export function ResultActions({ cardData, onLogMatch }: ResultActionsProps) {
     }
   }
 
+  function handleSubmitForm({ name, jerseyNumber }: { name: string; jerseyNumber: number | undefined }) {
+    setIsFormOpen(false);
+    // Nama kosong = pakai displayName bawaan (sesi login / fallback generik).
+    void handleShare({ ...cardData, displayName: name || cardData.displayName, jerseyNumber });
+  }
+
+  function handleSkipForm() {
+    setIsFormOpen(false);
+    void handleShare(cardData);
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
-      <Button variant="secondary" onClick={handleShare} disabled={isSharing} className="w-full">
-        {isSharing ? t.results.resultActions.preparingCard : t.results.resultActions.shareCard}
-      </Button>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={isFormOpen ? 'form' : 'button'}
+          initial={shouldReduceMotion ? false : DIALOG_HIDDEN}
+          animate={DIALOG_VISIBLE}
+          exit={shouldReduceMotion ? undefined : DIALOG_HIDDEN}
+          transition={DIALOG_TRANSITION}
+        >
+          {isFormOpen ? (
+            <ShareCardForm onSkip={handleSkipForm} onSubmit={handleSubmitForm} />
+          ) : (
+            <Button variant="secondary" onClick={() => setIsFormOpen(true)} disabled={isSharing} className="w-full">
+              {isSharing ? t.results.resultActions.preparingCard : t.results.resultActions.shareCard}
+            </Button>
+          )}
+        </motion.div>
+      </AnimatePresence>
       {error && (
         <p role="alert" className="text-sm text-danger-600">
           {error}

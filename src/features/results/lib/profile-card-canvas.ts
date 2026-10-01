@@ -8,6 +8,8 @@ import {
 
 export interface ProfileCardData {
   displayName: string;
+  /** Nomor punggung favorit 1-99 — kalau ada, digambar "#N" rata kanan di baris nama header; kalau tidak ada, header persis seperti biasa. */
+  jerseyNumber?: number;
   positionName: string;
   positionScore: number;
   position: PositionCode;
@@ -38,6 +40,12 @@ const CARD_WIDTH = 1080;
 // karena kartu jadi lebih tinggi kalau ada section role posisi alternatif,
 // dan lebih pendek lagi kalau tidak ada posisi alternatif sama sekali.
 const HEADER_HEIGHT = 260;
+const HEADER_NAME_BASELINE_Y = 180;
+const HEADER_NAME_FONT_SIZE = 64;
+const HEADER_NAME_MIN_FONT_SIZE = 36;
+// Nomor sedikit lebih kecil dari nama (56 vs 64) supaya nama tetap yang utama.
+const HEADER_NUMBER_FONT_SIZE = 56;
+const HEADER_NAME_NUMBER_GAP = 40;
 const ROLE_LIST_START_Y = 620;
 const ROLE_ROW_HEIGHT = 70;
 const SECTION_LABEL_GAP = 40;
@@ -360,6 +368,37 @@ function drawFooter(ctx: CanvasRenderingContext2D, footerY: number): void {
   });
 }
 
+/**
+ * Baris nama di header band. Tanpa nomor punggung: nama digambar apa adanya
+ * (tidak di-shrink, sama seperti sebelum ada fitur nomor). Dengan nomor:
+ * "#N" rata kanan di baris yang sama, dan nama dibatasi ke ruang sisa di kirinya.
+ */
+function drawHeaderName(ctx: CanvasRenderingContext2D, displayName: string, jerseyNumber: number | undefined): void {
+  if (jerseyNumber === undefined) {
+    ctx.font = `700 ${HEADER_NAME_FONT_SIZE}px ${FONT_FAMILY}`;
+    ctx.fillText(displayName, CARD_SIDE_MARGIN, HEADER_NAME_BASELINE_Y);
+    return;
+  }
+
+  const numberText = `#${jerseyNumber}`;
+  ctx.font = `700 ${HEADER_NUMBER_FONT_SIZE}px ${FONT_FAMILY}`;
+  const numberWidth = ctx.measureText(numberText).width;
+  ctx.textAlign = 'right';
+  ctx.fillText(numberText, CARD_WIDTH - CARD_SIDE_MARGIN, HEADER_NAME_BASELINE_Y);
+  ctx.textAlign = 'left';
+
+  const fittedName = fitTextToWidth(
+    ctx,
+    displayName,
+    CARD_WIDTH - CARD_SIDE_MARGIN * 2 - numberWidth - HEADER_NAME_NUMBER_GAP,
+    HEADER_NAME_FONT_SIZE,
+    HEADER_NAME_MIN_FONT_SIZE,
+    700,
+  );
+  ctx.font = `700 ${fittedName.fontSize}px ${FONT_FAMILY}`;
+  ctx.fillText(fittedName.text, CARD_SIDE_MARGIN, HEADER_NAME_BASELINE_Y);
+}
+
 /** FR-18 — kartu profil untuk dibagikan (lebar tetap 1080, tinggi menyesuaikan konten — lebih tinggi kalau ada section role posisi alternatif). Menggambar ke canvas yang diberikan (bukan membuat sendiri) agar mudah diuji dengan canvas offscreen. */
 export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData, strings: ProfileCardStrings): void {
   const hasAlternativeRoles = data.alternativePosition !== null && data.alternativeRoles.length > 0;
@@ -396,8 +435,7 @@ export function drawProfileCard(canvas: HTMLCanvasElement, data: ProfileCardData
   ctx.fillStyle = COLOR_WHITE;
   ctx.font = `400 32px ${FONT_FAMILY}`;
   ctx.fillText('Position & Role Finder Minisoccer', 60, 80);
-  ctx.font = `700 64px ${FONT_FAMILY}`;
-  ctx.fillText(data.displayName, 60, 180);
+  drawHeaderName(ctx, data.displayName, data.jerseyNumber);
 
   drawPositionColumn(
     ctx,

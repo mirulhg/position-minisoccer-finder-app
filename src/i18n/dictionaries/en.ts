@@ -97,6 +97,17 @@ export const en: Dictionary = {
       alternativeRolesSectionLabel: 'Best Roles — Alternative Position',
       topAttributesSectionLabel: 'Top strengths',
       defaultDisplayName: 'Minisoccer Player',
+      shareForm: {
+        title: 'Personalize your card',
+        subtitle: 'Optional — you can share the card without filling these in.',
+        nameLabel: 'Name',
+        namePlaceholder: 'e.g. Rizky',
+        jerseyNumberLabel: 'Favorite jersey number',
+        jerseyNumberHint: 'A number from 1 to 99',
+        jerseyNumberInvalid: 'Enter a whole number from 1 to 99, or leave it empty.',
+        skip: 'Skip',
+        share: 'Share',
+      },
     },
   },
 };
