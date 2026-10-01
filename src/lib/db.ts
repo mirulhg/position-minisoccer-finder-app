@@ -5,6 +5,13 @@ const DB_NAME = 'msf-db';
 // offline). v4 menambahkan store 'meta' (menyimpan `lastActivityAt` untuk
 // auto-reset progres yang ditinggal >30 hari) — dinaikkan lagi supaya
 // pengguna lama ikut memicu `upgrade`.
+//
+// JANGAN PERNAH menurunkan angka ini setelah pernah dinaikkan — termasuk
+// kalau fitur yang memicu kenaikannya di-revert/rollback. IndexedDB menolak
+// (VersionError) membuka database yang sudah di-upgrade ke versi lebih tinggi
+// di browser pengguna, sehingga `openDB` reject dan semua baca/tulis lokal
+// gagal. Kalau fiturnya di-rollback, biarkan versi di angka terakhir (atau
+// naikkan lagi); store yang tidak terpakai lagi dibiarkan saja.
 const DB_VERSION = 4;
 
 export type StoreName = 'onboardingProfile' | 'answers' | 'analyticsQueue' | 'matchQueue' | 'meta';

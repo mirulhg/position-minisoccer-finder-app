@@ -77,6 +77,13 @@ export function AppRouter() {
           setScreen('questionnaire');
         }
         setIsBootstrapping(false);
+      })
+      .catch((error) => {
+        // Gagal di mana pun (mis. IndexedDB tidak bisa dibuka) tidak boleh
+        // membuat app macet di "Memuat…": mulai dari onboarding (state awal
+        // yang aman) dan catat errornya.
+        console.warn('Bootstrap gagal, memulai dari onboarding:', error);
+        setIsBootstrapping(false);
       });
   }, []);
 
