@@ -12,6 +12,14 @@ Urutan: terbaru di atas. Tanggal mengikuti yang tercatat di catatan asli
 (hasil verifikasi baca-kode langsung, bukan tanggal commit git yang sebenarnya
 — kalau mau presisi, cocokkan dengan `git log`).
 
+## 2026-10-01 — Warna progress bar kuesioner ke token brand (v0.3.1)
+
+Fill `ProgressBar` (dipakai `QuestionnaireFlow`) berpindah dari token legacy
+`primary-600` (hijau pra-rebrand) ke `brand-primary` (#E90052). Hanya kelas
+warna fill yang berubah; track, animasi lebar, dan atribut aksesibilitas
+tetap. File lain yang masih memakai token `primary-*` legacy sengaja belum
+disentuh.
+
 ## 2026-10-01 — Personalisasi kartu profil & perbaikan app macet saat IndexedDB gagal (v0.3.0)
 
 - **Kartu profil**: tombol "Bagikan kartu profil" kini membuka form inline
