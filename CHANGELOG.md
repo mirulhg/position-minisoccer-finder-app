@@ -12,6 +12,15 @@ Urutan: terbaru di atas. Tanggal mengikuti yang tercatat di catatan asli
 (hasil verifikasi baca-kode langsung, bukan tanggal commit git yang sebenarnya
 — kalau mau presisi, cocokkan dengan `git log`).
 
+## 2026-10-01 — Perbaikan tombol Lanjut terkunci di pertanyaan frekuensi (v0.3.2)
+
+`QuestionPage` kini men-seed jawaban 0 untuk pertanyaan tipe frekuensi (`F`)
+yang belum pernah dijawab. Sebelumnya `NumberStepper` menampilkan 0 tetapi
+draft tetap `undefined` sampai tombol +/− ditekan, sehingga "Lanjut"
+disabled tanpa alasan yang terlihat bagi pemain yang memang tidak pernah
+melakukan hal yang ditanyakan. Jawaban tersimpan tidak ditimpa, dan tipe
+Likert/Consistency/Trade-off tetap wajib dipilih manual.
+
 ## 2026-10-01 — Warna progress bar kuesioner ke token brand (v0.3.1)
 
 Fill `ProgressBar` (dipakai `QuestionnaireFlow`) berpindah dari token legacy
