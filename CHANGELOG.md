@@ -12,6 +12,21 @@ Urutan: terbaru di atas. Tanggal mengikuti yang tercatat di catatan asli
 (hasil verifikasi baca-kode langsung, bukan tanggal commit git yang sebenarnya
 — kalau mau presisi, cocokkan dengan `git log`).
 
+## 2026-10-01 — Personalisasi kartu profil & perbaikan app macet saat IndexedDB gagal (v0.3.0)
+
+- **Kartu profil**: tombol "Bagikan kartu profil" kini membuka form inline
+  (`ShareCardForm`) berisi nama dan nomor punggung favorit (1-99), keduanya
+  opsional; "Lewati" membagikan kartu persis seperti sebelumnya. Nomor
+  digambar `#N` rata kanan di baris nama header, nama di-shrink lewat
+  `fitTextToWidth` agar tidak bertabrakan. Input tidak disimpan ke mana pun.
+  Validasi nomor ada di `parse-jersey-number.ts` (bertes). Teks form
+  dwibahasa di `results.profileCard.shareForm`.
+- **Perbaikan**: kegagalan membuka IndexedDB (mis. `DB_VERSION` diturunkan
+  setelah pernah dinaikkan) tidak lagi membuat app macet di "Memuat…".
+  Bootstrap di `router.tsx` punya `.catch` yang lanjut ke onboarding; hook
+  onboarding dan kuesioner juga tidak berhenti saat baca/tulis lokal gagal.
+  Komentar di `DB_VERSION` menegaskan versi tidak boleh diturunkan lagi.
+
 ## 2026-09-28 — Dukungan Bahasa Inggris (i18n): Layar Hasil, Kuesioner, kartu profil PNG (v0.2.0)
 
 Infrastruktur i18n dari nol di `src/i18n/` — dictionary manual type-safe
