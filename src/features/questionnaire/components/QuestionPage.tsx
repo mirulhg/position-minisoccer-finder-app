@@ -18,7 +18,16 @@ export function QuestionPage({ questions, initialAnswers, onSubmit, onBack, onRe
   const [draft, setDraft] = useState<Record<string, AnswerValue>>(() => {
     const seeded: Record<string, AnswerValue> = {};
     for (const question of questions) {
-      if (initialAnswers[question.id] !== undefined) seeded[question.id] = initialAnswers[question.id];
+      if (initialAnswers[question.id] !== undefined) {
+        seeded[question.id] = initialAnswers[question.id];
+      } else if (question.type === 'F') {
+        // NumberStepper menampilkan 0 sebagai default visual, dan bagi pemain
+        // awam "0 yang tertampil = tidak pernah melakukannya" adalah jawaban
+        // sah — status terjawab di state harus sinkron dengan itu sejak awal,
+        // bukan menunggu tombol +/− ditekan (kalau tidak, "Lanjut" disabled
+        // tanpa alasan yang terlihat).
+        seeded[question.id] = 0;
+      }
     }
     return seeded;
   });
